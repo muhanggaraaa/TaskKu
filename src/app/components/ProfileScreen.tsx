@@ -1,0 +1,88 @@
+"use client";
+import { LogOut } from "lucide-react";
+import { FONT_HEADING } from "@/lib/types";
+
+function Stat({ label, val, color, bg }: { label: string; val: number; color: string; bg: string }) {
+  return (
+    <div style={{ borderRadius: 16, padding: '14px 12px', textAlign: 'center', background: bg }}>
+      <div style={{ fontSize: 24, fontWeight: 800, color, fontFamily: FONT_HEADING }}>{val}</div>
+      <div style={{ marginTop: 2, fontSize: 10, fontWeight: 600, color, textTransform: 'uppercase' as const, letterSpacing: '0.03em' }}>{label}</div>
+    </div>
+  );
+}
+
+export function ProfileScreen({ user, stats, onLogout }: {
+  user: string;
+  stats: { total: number; done: number; overdue: number; today: number };
+  onLogout: () => void;
+}) {
+  const completion = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
+  return (
+    <div className="animate-fade-in stagger-children" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Avatar card */}
+      <div className="card" style={{ padding: '28px 20px', textAlign: 'center' }}>
+        <div style={{
+          width: 72, height: 72, margin: '0 auto', borderRadius: '50%',
+          background: 'linear-gradient(135deg, #2563eb 0%, #6366f1 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'white', fontSize: 28, fontWeight: 800, fontFamily: FONT_HEADING,
+          boxShadow: '0 6px 24px rgba(37,99,235,0.25)',
+        }}>
+          {user.charAt(0).toUpperCase()}
+        </div>
+        <h3 style={{ marginTop: 14, fontSize: 18, fontWeight: 800, fontFamily: FONT_HEADING, color: '#0f172a' }}>{user}</h3>
+        <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>Pengguna TaskKu</p>
+      </div>
+
+      {/* Progress card */}
+      <div className="card" style={{ padding: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#475569' }}>Progress Keseluruhan</span>
+          <span style={{ fontSize: 20, fontWeight: 800, fontFamily: FONT_HEADING, color: '#2563eb' }}>{completion}%</span>
+        </div>
+        <div style={{ height: 8, background: '#f1f5f9', borderRadius: 20, overflow: 'hidden' }}>
+          <div style={{
+            height: '100%', borderRadius: 20, transition: 'width 0.5s ease',
+            background: 'linear-gradient(90deg, #2563eb, #6366f1)',
+            width: `${completion}%`,
+          }} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 16 }}>
+          <Stat label="Total" val={stats.total} color="#2563EB" bg="#eff6ff" />
+          <Stat label="Selesai" val={stats.done} color="#10B981" bg="#ecfdf5" />
+          <Stat label="Overdue" val={stats.overdue} color="#EF4444" bg="#fef2f2" />
+        </div>
+      </div>
+
+      {/* About card */}
+      <div className="card" style={{ padding: '20px' }}>
+        <h4 style={{ fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 8 }}>Tentang TaskKu</h4>
+        <p style={{ fontSize: 12, color: '#64748b', lineHeight: 1.7 }}>
+          Aplikasi manajemen tugas yang menerapkan <strong style={{ color: '#334155' }}>MVP Challenge</strong>:
+          form interaktif tersambung ke Supabase via <strong style={{ color: '#334155' }}>Server Actions</strong> dengan loading state dan notifikasi.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+          {["Server Actions", "Supabase DB", "Next.js App Router", "Loading + Toast"].map((tag) => (
+            <span key={tag} style={{
+              padding: '4px 10px', background: '#eff6ff', color: '#2563eb',
+              borderRadius: 20, fontSize: 10, fontWeight: 700,
+            }}>{tag}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Logout */}
+      <button onClick={onLogout} style={{
+        width: '100%', padding: '14px 0', border: '2px solid #fecaca',
+        borderRadius: 16, background: 'white', color: '#dc2626',
+        fontSize: 14, fontWeight: 700, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        transition: 'all 0.15s ease',
+      }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = '#fef2f2'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'white'; }}>
+        <LogOut size={16} /> Keluar
+      </button>
+    </div>
+  );
+}
