@@ -33,17 +33,21 @@ export function AddTaskModal({ open, onClose, onTaskCreated }: {
         dueDate, priority, category, done: false, createdAt: new Date().toISOString(),
       };
       const result = await createTaskAction(record);
-      if (result.success) {
-        toast.success("Tugas berhasil disimpan!", {
-          description: `"${title.trim()}" tersimpan via Server Action.`,
+      if (result.success && result.source === "supabase") {
+        toast.success("Tugas tersimpan ke database! ☁️", {
+          description: `"${title.trim()}" tersimpan via Server Action → Supabase.`,
           icon: <CheckCircle2 size={18} />,
         });
         onTaskCreated(result.task || record);
       } else {
+        // Fallback ke localStorage
         const stored = JSON.parse(localStorage.getItem("taskku_tasks") || "[]");
         stored.push(record);
         localStorage.setItem("taskku_tasks", JSON.stringify(stored));
-        toast.success("Tugas disimpan (localStorage)", { icon: <CheckCircle2 size={18} /> });
+        toast.success("Tugas disimpan (lokal) 📱", {
+          description: result.error ? `DB error: ${result.error}` : "Tersimpan di browser ini saja.",
+          icon: <CheckCircle2 size={18} />,
+        });
         onTaskCreated(record);
       }
       resetForm();

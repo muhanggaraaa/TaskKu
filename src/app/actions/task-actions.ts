@@ -33,6 +33,8 @@ import type { Task } from "@/lib/types";
  * (client akan fallback ke localStorage).
  */
 export async function getTasks(): Promise<Task[]> {
+  console.log("[Server Action] getTasks called. Supabase configured:", isSupabaseConfigured, "URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "SET" : "EMPTY");
+  
   if (!isSupabaseConfigured || !supabase) {
     console.log("[Server Action] Supabase not configured, returning empty array");
     return [];
@@ -49,6 +51,7 @@ export async function getTasks(): Promise<Task[]> {
       return [];
     }
 
+    console.log("[Server Action] getTasks success, found", data?.length || 0, "tasks");
     return data ? data.map(dbToTask) : [];
   } catch (err) {
     console.error("[Server Action] getTasks exception:", err);
@@ -70,10 +73,10 @@ export async function getTasks(): Promise<Task[]> {
  * 
  * @returns Task yang berhasil dibuat, atau null jika gagal
  */
-export async function createTaskAction(task: Task): Promise<{ success: boolean; task?: Task; error?: string }> {
+export async function createTaskAction(task: Task): Promise<{ success: boolean; task?: Task; error?: string; source?: string }> {
   if (!isSupabaseConfigured || !supabase) {
-    console.log("[Server Action] Supabase not configured, task not saved to DB");
-    return { success: true, task }; // Return task as-is, client will save to localStorage
+    console.log("[Server Action] Supabase NOT configured, falling back to localStorage");
+    return { success: false, error: "Supabase not configured", source: "none" };
   }
 
   try {
@@ -85,13 +88,14 @@ export async function createTaskAction(task: Task): Promise<{ success: boolean; 
 
     if (error) {
       console.error("[Server Action] createTask error:", error.message);
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, source: "supabase_error" };
     }
 
-    return { success: true, task: dbToTask(data) };
+    console.log("[Server Action] Task saved to Supabase!", data.id);
+    return { success: true, task: dbToTask(data), source: "supabase" };
   } catch (err) {
     console.error("[Server Action] createTask exception:", err);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), source: "exception" };
   }
 }
 
