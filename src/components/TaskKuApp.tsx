@@ -8,6 +8,11 @@
  * - Search menggunakan URL as State (useSearchParams)
  * - Optimistic UI menggunakan useOptimistic
  * - Logout via Server Action (hapus cookie)
+ *
+ * Improvement:
+ * - Task Detail Modal (lihat detail lengkap)
+ * - Edit Task Modal (edit tugas yang sudah ada)
+ * - Konfirmasi Hapus (dialog konfirmasi sebelum hapus)
  */
 
 import {
@@ -42,13 +47,17 @@ import { TaskCard } from "@/components/TaskCard";
 import { CalendarScreen } from "@/components/CalendarScreen";
 import { ProfileScreen } from "@/components/ProfileScreen";
 import { AddTaskModal } from "@/components/AddTaskModal";
+import { TaskDetailModal } from "@/components/TaskDetailModal";
+import { EditTaskModal } from "@/components/EditTaskModal";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 const STORAGE_KEY = "taskku_tasks";
 
 type OptimisticAction =
   | { type: "toggle"; id: string }
   | { type: "delete"; id: string }
-  | { type: "add"; task: Task };
+  | { type: "add"; task: Task }
+  | { type: "update"; task: Task };
 
 export function TaskKuApp({
   initialTasks,
@@ -60,6 +69,11 @@ export function TaskKuApp({
   const [screen, setScreen] = useState<Screen>("home");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [open, setOpen] = useState(false);
+
+  // === New States for Detail, Edit, Delete Confirm ===
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [deletingTask, setDeletingTask] = useState<Task | null>(null);
 
   // === Task 3: URL as State — Search via URL search params ===
   const searchParams = useSearchParams();
@@ -95,6 +109,10 @@ export function TaskKuApp({
           return [...state, action.task].sort((a, b) =>
             a.dueDate.localeCompare(b.dueDate),
           );
+        case "update":
+          return state
+            .map((t) => (t.id === action.task.id ? action.task : t))
+            .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
         default:
           return state;
       }
@@ -169,9 +187,32 @@ export function TaskKuApp({
     });
   };
 
+  // Confirm delete flow
+  const handleDeleteRequest = (t: Task) => {
+    setDeletingTask(t);
+  };
+
+  const confirmDelete = () => {
+    if (deletingTask) {
+      deleteTask(deletingTask);
+      setDeletingTask(null);
+    }
+  };
+
   const onTaskCreated = (task: Task) => {
     setTasks((prev) =>
       [...prev, task].sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
+    );
+  };
+
+  const onTaskUpdated = (updatedTask: Task) => {
+    startTransition(() => {
+      addOptimistic({ type: "update", task: updatedTask });
+    });
+    setTasks((prev) =>
+      prev
+        .map((t) => (t.id === updatedTask.id ? updatedTask : t))
+        .sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
     );
   };
 
@@ -518,7 +559,7 @@ export function TaskKuApp({
                         key={t.id}
                         task={t}
                         onToggle={toggleTask}
-                        onDelete={deleteTask}
+                        onDetail={setSelectedTask}
                       />
                     ))}
                   </div>
@@ -530,7 +571,8 @@ export function TaskKuApp({
             <CalendarScreen
               tasks={optimisticTasks}
               onToggle={toggleTask}
-              onDelete={deleteTask}
+              onDelete={handleDeleteRequest}
+              onDetail={setSelectedTask}
             />
           )}
           {screen === "profile" && <ProfileScreen user={user} stats={stats} />}
@@ -659,6 +701,48 @@ export function TaskKuApp({
         open={open}
         onClose={() => setOpen(false)}
         onTaskCreated={onTaskCreated}
+      />
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onEdit={(t) => {
+            setSelectedTask(null);
+            setEditingTask(t);
+          }}
+          onToggle={(t) => {
+            toggleTask(t);
+            setSelectedTask(null);
+          }}
+          onDelete={(t) => {
+            setSelectedTask(null);
+            handleDeleteRequest(t);
+          }}
+        />
+      )}
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <EditTaskModal
+          task={editingTask}
+          onClose={() => setEditingTask(null)}
+          onTaskUpdated={(updatedTask) => {
+            onTaskUpdated(updatedTask);
+            setEditingTask(null);
+          }}
+        />
+      )}
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        open={!!deletingTask}
+        title="Hapus Tugas?"
+        message={`Tugas "${deletingTask?.title}" akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.`}
+        confirmLabel="Hapus"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingTask(null)}
       />
     </div>
   );

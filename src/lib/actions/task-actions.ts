@@ -198,6 +198,84 @@ export async function toggleTaskAction(
   }
 }
 
+// ==================== UPDATE (Full Edit) ====================
+
+/**
+ * Server Action: Update Task
+ *
+ * Memperbarui seluruh data task di Supabase database.
+ * Digunakan ketika user mengedit tugas via EditTaskModal.
+ *
+ * Validasi menggunakan Zod schema yang sama dengan createTaskAction
+ * untuk memastikan konsistensi data.
+ *
+ * @returns Task yang sudah diupdate, atau error
+ */
+export async function updateTaskAction(
+  task: Task,
+): Promise<{
+  success: boolean;
+  task?: Task;
+  error?: string;
+  source?: string;
+  fieldErrors?: TaskFieldErrors;
+}> {
+  // === Zod Validation ===
+  const validation = TaskFormSchema.safeParse({
+    title: task.title,
+    description: task.description,
+    dueDate: task.dueDate,
+    priority: task.priority,
+    category: task.category,
+  });
+
+  if (!validation.success) {
+    const fieldErrors = validation.error.flatten()
+      .fieldErrors as TaskFieldErrors;
+    console.log("[Server Action] Update validation failed:", fieldErrors);
+    return {
+      success: false,
+      error: "Validasi gagal",
+      fieldErrors,
+      source: "validation",
+    };
+  }
+
+  if (!isSupabaseConfigured || !supabase) {
+    console.log(
+      "[Server Action] Supabase NOT configured, falling back to localStorage",
+    );
+    return { success: false, error: "Supabase not configured", source: "none" };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("tasks")
+      .update({
+        title: task.title,
+        description: task.description,
+        duedate: task.dueDate,
+        priority: task.priority,
+        category: task.category,
+        done: task.done,
+      })
+      .eq("id", task.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[Server Action] updateTask error:", error.message);
+      return { success: false, error: error.message, source: "supabase_error" };
+    }
+
+    console.log("[Server Action] Task updated in Supabase!", data.id);
+    return { success: true, task: dbToTask(data), source: "supabase" };
+  } catch (err) {
+    console.error("[Server Action] updateTask exception:", err);
+    return { success: false, error: String(err), source: "exception" };
+  }
+}
+
 // ==================== DELETE ====================
 
 /**
@@ -228,3 +306,4 @@ export async function deleteTaskAction(
     return { success: false, error: String(err) };
   }
 }
+

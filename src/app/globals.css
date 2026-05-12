@@ -270,6 +270,181 @@ nav .app-container,
   }
 }
 
+/* ==================== CLICKABLE CARD ==================== */
+.card-clickable {
+  cursor: pointer;
+  position: relative;
+}
+
+.card-clickable::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  opacity: 0;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.03), rgba(99, 102, 241, 0.03));
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.card-clickable:hover::after {
+  opacity: 1;
+}
+
+.card-clickable:active {
+  transform: scale(0.985);
+}
+
+/* ==================== STATUS BADGES ==================== */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-body);
+}
+
+.badge-done {
+  background: #D1FAE5;
+  color: #059669;
+}
+
+.badge-pending {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.badge-overdue {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+/* ==================== BUTTON VARIANTS ==================== */
+.btn-danger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+}
+
+.btn-danger:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.35);
+}
+
+.btn-danger:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  background: white;
+  color: #475569;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.btn-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-ghost:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+/* ==================== INFO GRID ==================== */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.info-item {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.info-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  font-family: var(--font-heading);
+}
+
+/* ==================== DETAIL MODAL DESCRIPTION ==================== */
+.detail-description {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ==================== MODAL ACTIONS ==================== */
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.modal-actions > * {
+  flex: 1;
+}
+
 /* Fix for bottom nav safe area on iOS */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .bottom-nav-safe {

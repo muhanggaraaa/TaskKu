@@ -6,8 +6,8 @@ import { FONT_HEADING, FONT } from "@/lib/types";
 import { todayISO, formatDate } from "@/lib/utils";
 import { TaskCard } from "@/components/TaskCard";
 
-export function CalendarScreen({ tasks, onToggle, onDelete }: {
-  tasks: Task[]; onToggle: (t: Task) => void; onDelete: (t: Task) => void;
+export function CalendarScreen({ tasks, onToggle, onDelete, onDetail }: {
+  tasks: Task[]; onToggle: (t: Task) => void; onDelete: (t: Task) => void; onDetail: (t: Task) => void;
 }) {
   const [month, setMonth] = useState(new Date());
   const [selected, setSelected] = useState(todayISO());
@@ -93,7 +93,7 @@ export function CalendarScreen({ tasks, onToggle, onDelete }: {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {dayTasks.map((t) => <TaskCard key={t.id} task={t} onToggle={onToggle} onDelete={onDelete} />)}
+            {dayTasks.map((t) => <TaskCard key={t.id} task={t} onToggle={onToggle} onDetail={onDetail} />)}
           </div>
         )}
       </div>

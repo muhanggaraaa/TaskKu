@@ -196,7 +196,8 @@ export function ProfileScreen({
             "Zod Validation",
             "URL as State",
             "Optimistic UI",
-            "Skeleton Loading",
+            "Task Detail",
+            "Edit Task",
             "Supabase DB",
           ].map((tag) => (
             <span
