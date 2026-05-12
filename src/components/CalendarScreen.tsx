@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Task } from "@/lib/types";
 import { FONT_HEADING, FONT } from "@/lib/types";
 import { todayISO, formatDate } from "@/lib/utils";
-import { TaskCard } from "./TaskCard";
+import { TaskCard } from "@/components/TaskCard";
 
 export function CalendarScreen({ tasks, onToggle, onDelete }: {
   tasks: Task[]; onToggle: (t: Task) => void; onDelete: (t: Task) => void;

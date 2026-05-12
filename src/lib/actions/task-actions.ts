@@ -1,42 +1,55 @@
 /**
  * TaskKu Server Actions
- * 
+ *
  * ============================================
  * BAGIAN INTI: SERVER ACTIONS
  * ============================================
- * 
+ *
  * Server Actions adalah fungsi asinkron yang berjalan EKSKLUSIF di server,
  * namun bisa dipanggil langsung dari komponen UI (Client Components).
- * 
+ *
  * Keunggulan dibanding API Routes tradisional:
  * - Aman: Kode rahasia tidak bocor ke browser
  * - Sederhana: Tidak butuh endpoint API terpisah
  * - Cepat: Terintegrasi langsung dengan form HTML
  * - Type Safety: End-to-end TypeScript
  * - Progressive Enhancement: Bawaan (tetap jalan tanpa JS)
- * 
+ *
  * Directive "use server" menandai file ini HANYA berjalan di server.
  */
 
 "use server";
 
-import { supabase, isSupabaseConfigured, dbToTask, taskToDb } from "@/lib/supabase";
+import {
+  supabase,
+  isSupabaseConfigured,
+  dbToTask,
+  taskToDb,
+} from "@/lib/supabase";
 import type { Task } from "@/lib/types";
+import { TaskFormSchema, type TaskFieldErrors } from "@/lib/schemas";
 
 // ==================== READ ====================
 
 /**
  * Server Action: Get All Tasks
- * 
+ *
  * Mengambil semua task dari Supabase database.
  * Jika Supabase belum dikonfigurasi, return array kosong
  * (client akan fallback ke localStorage).
  */
 export async function getTasks(): Promise<Task[]> {
-  console.log("[Server Action] getTasks called. Supabase configured:", isSupabaseConfigured, "URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? "SET" : "EMPTY");
-  
+  console.log(
+    "[Server Action] getTasks called. Supabase configured:",
+    isSupabaseConfigured,
+    "URL:",
+    process.env.NEXT_PUBLIC_SUPABASE_URL ? "SET" : "EMPTY",
+  );
+
   if (!isSupabaseConfigured || !supabase) {
-    console.log("[Server Action] Supabase not configured, returning empty array");
+    console.log(
+      "[Server Action] Supabase not configured, returning empty array",
+    );
     return [];
   }
 
@@ -51,7 +64,11 @@ export async function getTasks(): Promise<Task[]> {
       return [];
     }
 
-    console.log("[Server Action] getTasks success, found", data?.length || 0, "tasks");
+    console.log(
+      "[Server Action] getTasks success, found",
+      data?.length || 0,
+      "tasks",
+    );
     return data ? data.map(dbToTask) : [];
   } catch (err) {
     console.error("[Server Action] getTasks exception:", err);
@@ -63,19 +80,50 @@ export async function getTasks(): Promise<Task[]> {
 
 /**
  * Server Action: Create Task
- * 
+ *
  * Membuat task baru di Supabase database.
  * Menerima Task object dan menyimpannya.
- * 
+ *
  * Ini adalah contoh Server Action yang dipanggil dari form:
  * - Form submit → Server Action → Insert ke DB → Return result
  * - Tidak perlu fetch() manual atau endpoint API terpisah!
- * 
+ *
  * @returns Task yang berhasil dibuat, atau null jika gagal
  */
-export async function createTaskAction(task: Task): Promise<{ success: boolean; task?: Task; error?: string; source?: string }> {
+export async function createTaskAction(
+  task: Task,
+): Promise<{
+  success: boolean;
+  task?: Task;
+  error?: string;
+  source?: string;
+  fieldErrors?: TaskFieldErrors;
+}> {
+  // === Zod Validation ===
+  const validation = TaskFormSchema.safeParse({
+    title: task.title,
+    description: task.description,
+    dueDate: task.dueDate,
+    priority: task.priority,
+    category: task.category,
+  });
+
+  if (!validation.success) {
+    const fieldErrors = validation.error.flatten()
+      .fieldErrors as TaskFieldErrors;
+    console.log("[Server Action] Validation failed:", fieldErrors);
+    return {
+      success: false,
+      error: "Validasi gagal",
+      fieldErrors,
+      source: "validation",
+    };
+  }
+
   if (!isSupabaseConfigured || !supabase) {
-    console.log("[Server Action] Supabase NOT configured, falling back to localStorage");
+    console.log(
+      "[Server Action] Supabase NOT configured, falling back to localStorage",
+    );
     return { success: false, error: "Supabase not configured", source: "none" };
   }
 
@@ -103,16 +151,18 @@ export async function createTaskAction(task: Task): Promise<{ success: boolean; 
 
 /**
  * Server Action: Toggle Task Status
- * 
+ *
  * Toggle status done/undone dari sebuah task.
  * Menggunakan optimistic update pattern:
  * 1. Client update UI duluan (optimistic)
  * 2. Server Action dijalankan di background
  * 3. Jika gagal, client revert ke state sebelumnya
- * 
+ *
  * @returns Task yang sudah diupdate, atau error
  */
-export async function toggleTaskAction(id: string): Promise<{ success: boolean; task?: Task; error?: string }> {
+export async function toggleTaskAction(
+  id: string,
+): Promise<{ success: boolean; task?: Task; error?: string }> {
   if (!isSupabaseConfigured || !supabase) {
     return { success: true }; // Client handles localStorage
   }
@@ -152,22 +202,21 @@ export async function toggleTaskAction(id: string): Promise<{ success: boolean; 
 
 /**
  * Server Action: Delete Task
- * 
+ *
  * Menghapus task dari Supabase database.
  * Juga menggunakan optimistic update pattern di client.
- * 
+ *
  * @returns Success status
  */
-export async function deleteTaskAction(id: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteTaskAction(
+  id: string,
+): Promise<{ success: boolean; error?: string }> {
   if (!isSupabaseConfigured || !supabase) {
     return { success: true }; // Client handles localStorage
   }
 
   try {
-    const { error } = await supabase
-      .from("tasks")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("tasks").delete().eq("id", id);
 
     if (error) {
       return { success: false, error: error.message };
