@@ -6,6 +6,7 @@ import type { Task } from "@/lib/types";
 import { PRIORITIES, CATEGORIES, FONT_HEADING, FONT } from "@/lib/types";
 import { updateTaskAction } from "@/lib/actions/task-actions";
 import type { TaskFieldErrors } from "@/lib/schemas";
+import { todayISO } from "@/lib/utils";
 
 export function EditTaskModal({
   task,
@@ -106,7 +107,7 @@ export function EditTaskModal({
         onClick={(e) => e.stopPropagation()}
         className="animate-slide-up"
         style={{
-          background: "white",
+          background: "var(--card-bg)",
           width: "100%",
           maxWidth: 420,
           borderRadius: "24px 24px 0 0",
@@ -119,7 +120,7 @@ export function EditTaskModal({
           style={{
             width: 36,
             height: 4,
-            background: "#e2e8f0",
+            background: "var(--card-border)",
             borderRadius: 4,
             margin: "0 auto 16px",
           }}
@@ -139,7 +140,7 @@ export function EditTaskModal({
               fontSize: 18,
               fontWeight: 800,
               fontFamily: FONT_HEADING,
-              color: "#0f172a",
+              color: "var(--foreground)",
             }}
           >
             Edit Tugas
@@ -150,8 +151,8 @@ export function EditTaskModal({
             disabled={submitting}
             style={{
               cursor: "pointer",
-              color: "#94a3b8",
-              background: "#f1f5f9",
+              color: "var(--foreground-subtle)",
+              background: "var(--hover-bg)",
               border: "none",
               borderRadius: 10,
               width: 32,
@@ -164,12 +165,12 @@ export function EditTaskModal({
             <X size={16} />
           </button>
         </div>
-        <p style={{ fontSize: 11, color: "#94a3b8", marginBottom: 20 }}>
+        <p style={{ fontSize: 11, color: "var(--foreground-subtle)", marginBottom: 20 }}>
           Perubahan disimpan via{" "}
           <span
             style={{
-              color: "#3b82f6",
-              background: "#eff6ff",
+              color: "var(--notif-pill-text)",
+              background: "var(--notif-pill)",
               padding: "1px 6px",
               borderRadius: 4,
               fontWeight: 600,
@@ -187,7 +188,7 @@ export function EditTaskModal({
               style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: "#475569",
+                color: "var(--foreground-muted)",
                 marginBottom: 6,
                 display: "block",
               }}
@@ -231,7 +232,7 @@ export function EditTaskModal({
               style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: "#475569",
+                color: "var(--foreground-muted)",
                 marginBottom: 6,
                 display: "block",
               }}
@@ -280,7 +281,7 @@ export function EditTaskModal({
                 style={{
                   fontSize: 11,
                   fontWeight: 600,
-                  color: "#475569",
+                  color: "var(--foreground-muted)",
                   marginBottom: 6,
                   display: "block",
                 }}
@@ -302,6 +303,56 @@ export function EditTaskModal({
                   borderColor: fieldErrors.dueDate ? "#ef4444" : undefined,
                 }}
               />
+              {/* Quick-pick chips */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  marginTop: 6,
+                  flexWrap: "wrap",
+                }}
+              >
+                {(() => {
+                  const today = todayISO();
+                  const t = new Date();
+                  t.setDate(t.getDate() + 1);
+                  const tomorrow = t.toISOString().slice(0, 10);
+                  const w = new Date();
+                  w.setDate(w.getDate() + 7);
+                  const nextWeek = w.toISOString().slice(0, 10);
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        className="date-chip"
+                        data-active={dueDate === today}
+                        disabled={submitting}
+                        onClick={() => setDueDate(today)}
+                      >
+                        Hari Ini
+                      </button>
+                      <button
+                        type="button"
+                        className="date-chip"
+                        data-active={dueDate === tomorrow}
+                        disabled={submitting}
+                        onClick={() => setDueDate(tomorrow)}
+                      >
+                        Besok
+                      </button>
+                      <button
+                        type="button"
+                        className="date-chip"
+                        data-active={dueDate === nextWeek}
+                        disabled={submitting}
+                        onClick={() => setDueDate(nextWeek)}
+                      >
+                        + 7 hari
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
               {fieldErrors.dueDate && (
                 <p
                   style={{
@@ -320,7 +371,7 @@ export function EditTaskModal({
                 style={{
                   fontSize: 11,
                   fontWeight: 600,
-                  color: "#475569",
+                  color: "var(--foreground-muted)",
                   marginBottom: 6,
                   display: "block",
                 }}
@@ -349,7 +400,7 @@ export function EditTaskModal({
               style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: "#475569",
+                color: "var(--foreground-muted)",
                 marginBottom: 6,
                 display: "block",
               }}
@@ -374,9 +425,9 @@ export function EditTaskModal({
                     borderRadius: 12,
                     cursor: "pointer",
                     border:
-                      priority === pr.id ? "none" : "2px solid #e2e8f0",
-                    background: priority === pr.id ? pr.bg : "white",
-                    color: priority === pr.id ? pr.color : "#64748b",
+                      priority === pr.id ? "none" : "2px solid var(--card-border)",
+                    background: priority === pr.id ? pr.bg : "var(--card-bg)",
+                    color: priority === pr.id ? pr.color : "var(--foreground-muted)",
                     fontSize: 11,
                     fontWeight: 700,
                     fontFamily: FONT,

@@ -20,7 +20,7 @@ export function TaskCard({ task, onToggle, onDetail }: { task: Task; onToggle: (
       {/* Checkbox */}
       <button onClick={(e) => { e.stopPropagation(); onToggle(task); }} style={{
         marginTop: 2, width: 24, height: 24, borderRadius: 8, flexShrink: 0,
-        border: task.done ? 'none' : '2px solid #cbd5e1',
+        border: task.done ? 'none' : '2px solid var(--card-border)',
         background: task.done ? 'linear-gradient(135deg, #2563eb, #4f46e5)' : 'transparent',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', transition: 'all 0.15s ease',
@@ -31,13 +31,14 @@ export function TaskCard({ task, onToggle, onDetail }: { task: Task; onToggle: (
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <h4 style={{
-          fontSize: 14, fontWeight: 700, fontFamily: FONT_HEADING, color: task.done ? '#94a3b8' : '#1e293b',
+          fontSize: 14, fontWeight: 700, fontFamily: FONT_HEADING,
+          color: task.done ? 'var(--foreground-subtle)' : 'var(--foreground)',
           textDecoration: task.done ? 'line-through' : 'none', lineHeight: 1.4,
         }}>{task.title}</h4>
 
         {task.description && (
           <p style={{
-            fontSize: 12, color: '#94a3b8', marginTop: 3, lineHeight: 1.4,
+            fontSize: 12, color: 'var(--foreground-subtle)', marginTop: 3, lineHeight: 1.4,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{task.description}</p>
         )}
@@ -53,14 +54,14 @@ export function TaskCard({ task, onToggle, onDetail }: { task: Task; onToggle: (
           {/* Category */}
           <span style={{
             padding: '2px 8px', borderRadius: 20,
-            background: '#f1f5f9', color: '#64748b', fontSize: 10, fontWeight: 600,
+            background: 'var(--hover-bg)', color: 'var(--foreground-muted)', fontSize: 10, fontWeight: 600,
           }}>
             {task.category}
           </span>
           {/* Date */}
           <span style={{
             display: 'flex', alignItems: 'center', gap: 3,
-            color: overdue ? '#dc2626' : '#94a3b8', fontSize: 10, fontWeight: 600,
+            color: overdue ? '#dc2626' : 'var(--foreground-subtle)', fontSize: 10, fontWeight: 600,
           }}>
             <CalendarIcon size={10} /> {formatDate(task.dueDate)} {overdue && "• Overdue"}
           </span>

@@ -34,22 +34,22 @@ export function CalendarScreen({ tasks, onToggle, onDelete, onDetail }: {
       <div className="card" style={{ padding: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <button onClick={() => setMonth(new Date(year, m - 1, 1))} style={{
-            padding: 6, cursor: 'pointer', background: '#f1f5f9', border: 'none', borderRadius: 8,
-            display: 'flex', alignItems: 'center',
-          }}><ChevronLeft size={16} color="#475569" /></button>
-          <span style={{ fontSize: 15, fontWeight: 700, fontFamily: FONT_HEADING, color: '#1e293b', textTransform: 'capitalize' as const }}>
+            padding: 6, cursor: 'pointer', background: 'var(--hover-bg)', border: 'none', borderRadius: 8,
+            display: 'flex', alignItems: 'center', color: 'var(--foreground-muted)',
+          }}><ChevronLeft size={16} /></button>
+          <span style={{ fontSize: 15, fontWeight: 700, fontFamily: FONT_HEADING, color: 'var(--foreground)', textTransform: 'capitalize' as const }}>
             {monthLabel}
           </span>
           <button onClick={() => setMonth(new Date(year, m + 1, 1))} style={{
-            padding: 6, cursor: 'pointer', background: '#f1f5f9', border: 'none', borderRadius: 8,
-            display: 'flex', alignItems: 'center',
-          }}><ChevronRight size={16} color="#475569" /></button>
+            padding: 6, cursor: 'pointer', background: 'var(--hover-bg)', border: 'none', borderRadius: 8,
+            display: 'flex', alignItems: 'center', color: 'var(--foreground-muted)',
+          }}><ChevronRight size={16} /></button>
         </div>
 
         {/* Day headers */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, textAlign: 'center', marginBottom: 4 }}>
           {["M", "S", "S", "R", "K", "J", "S"].map((d, i) => (
-            <div key={`h-${i}`} style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', padding: 4 }}>{d}</div>
+            <div key={`h-${i}`} style={{ fontSize: 10, fontWeight: 600, color: 'var(--foreground-subtle)', padding: 4 }}>{d}</div>
           ))}
         </div>
 
@@ -65,8 +65,8 @@ export function CalendarScreen({ tasks, onToggle, onDelete, onDetail }: {
                 aspectRatio: '1', borderRadius: 10, border: 'none', cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 fontSize: 13, fontWeight: isSel || isToday ? 700 : 500, fontFamily: FONT,
-                background: isSel ? 'linear-gradient(135deg, #2563eb, #4f46e5)' : isToday ? '#eff6ff' : 'transparent',
-                color: isSel ? 'white' : isToday ? '#2563eb' : '#475569',
+                background: isSel ? 'linear-gradient(135deg, #2563eb, #4f46e5)' : isToday ? 'var(--notif-pill)' : 'transparent',
+                color: isSel ? 'white' : isToday ? 'var(--notif-pill-text)' : 'var(--foreground-muted)',
                 transition: 'all 0.15s ease',
               }}>
                 {Number(iso.slice(8))}
@@ -84,11 +84,11 @@ export function CalendarScreen({ tasks, onToggle, onDelete, onDetail }: {
 
       {/* Tasks for selected date */}
       <div>
-        <h3 style={{ fontSize: 13, fontWeight: 700, fontFamily: FONT_HEADING, color: '#475569', marginBottom: 10, paddingLeft: 4 }}>
+        <h3 style={{ fontSize: 13, fontWeight: 700, fontFamily: FONT_HEADING, color: 'var(--foreground-muted)', marginBottom: 10, paddingLeft: 4 }}>
           Tugas pada {formatDate(selected)}
         </h3>
         {dayTasks.length === 0 ? (
-          <div className="card" style={{ padding: '36px 20px', textAlign: 'center', color: '#94a3b8', borderStyle: 'dashed' }}>
+          <div className="card" style={{ padding: '36px 20px', textAlign: 'center', color: 'var(--foreground-subtle)', borderStyle: 'dashed' }}>
             <p style={{ fontSize: 13 }}>Tidak ada tugas pada tanggal ini.</p>
           </div>
         ) : (

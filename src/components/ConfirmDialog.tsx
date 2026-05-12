@@ -39,7 +39,7 @@ export function ConfirmDialog({
         className="animate-scale-in"
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "white",
+          background: "var(--card-bg)",
           borderRadius: 24,
           padding: "28px 24px 24px",
           width: "100%",
@@ -69,7 +69,7 @@ export function ConfirmDialog({
             fontSize: 17,
             fontWeight: 800,
             fontFamily: FONT_HEADING,
-            color: "#0f172a",
+            color: "var(--foreground)",
             textAlign: "center",
             marginBottom: 6,
           }}
@@ -81,7 +81,7 @@ export function ConfirmDialog({
         <p
           style={{
             fontSize: 13,
-            color: "#64748b",
+            color: "var(--foreground-muted)",
             textAlign: "center",
             lineHeight: 1.5,
             fontFamily: FONT,

@@ -33,7 +33,8 @@ import {
   User as UserIcon,
   Calendar as CalendarIcon,
   Bell,
-  LogOut,
+  Moon,
+  Sun,
   Clock,
   Search,
   X,
@@ -42,7 +43,7 @@ import type { Task, Screen } from "@/lib/types";
 import { FONT, FONT_HEADING } from "@/lib/types";
 import { todayISO } from "@/lib/utils";
 import { toggleTaskAction, deleteTaskAction } from "@/lib/actions/task-actions";
-import { logoutAction } from "@/lib/actions/auth-actions";
+import { useTheme } from "@/lib/useTheme";
 import { TaskCard } from "@/components/TaskCard";
 import { CalendarScreen } from "@/components/CalendarScreen";
 import { ProfileScreen } from "@/components/ProfileScreen";
@@ -50,6 +51,10 @@ import { AddTaskModal } from "@/components/AddTaskModal";
 import { TaskDetailModal } from "@/components/TaskDetailModal";
 import { EditTaskModal } from "@/components/EditTaskModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  NotificationPanel,
+  useActiveNotifications,
+} from "@/components/NotificationPanel";
 
 const STORAGE_KEY = "taskku_tasks";
 
@@ -69,6 +74,10 @@ export function TaskKuApp({
   const [screen, setScreen] = useState<Screen>("home");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [open, setOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  // === Theme (dark/light) ===
+  const { theme, toggleTheme, mounted: themeMounted } = useTheme();
 
   // === New States for Detail, Edit, Delete Confirm ===
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -240,12 +249,21 @@ export function TaskKuApp({
     [optimisticTasks],
   );
 
+  // === Active notifications ===
+  const {
+    active: activeNotifications,
+    dismiss: dismissNotification,
+    clearAll: clearAllNotifications,
+  } = useActiveNotifications(optimisticTasks);
+
+  const handleNotificationSelect = (taskId: string) => {
+    const task = optimisticTasks.find((t) => t.id === taskId);
+    if (task) setSelectedTask(task);
+  };
+
   // ==================== MAIN APP ====================
   return (
-    <div
-      style={{ fontFamily: FONT }}
-      className="min-h-dvh bg-slate-100 md:bg-slate-200"
-    >
+    <div style={{ fontFamily: FONT }} className="min-h-dvh">
       <div className="app-container">
         {/* ===== HEADER ===== */}
         <div
@@ -254,32 +272,43 @@ export function TaskKuApp({
               "linear-gradient(135deg, #1e40af 0%, #4338ca 50%, #6366f1 100%)",
             color: "white",
             position: "relative",
-            overflow: "hidden",
           }}
         >
-          {/* Decorative circle */}
+          {/* Decorative circles — wrapped in their own clipping layer so the
+              header itself can keep overflow:visible (needed for the
+              notification panel dropdown to escape the gradient bounds). */}
           <div
+            aria-hidden
             style={{
               position: "absolute",
-              top: -60,
-              right: -40,
-              width: 180,
-              height: 180,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.06)",
+              inset: 0,
+              overflow: "hidden",
+              pointerEvents: "none",
             }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: -30,
-              left: -20,
-              width: 120,
-              height: 120,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.04)",
-            }}
-          />
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: -60,
+                right: -40,
+                width: 180,
+                height: 180,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.06)",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                bottom: -30,
+                left: -20,
+                width: 120,
+                height: 120,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.04)",
+              }}
+            />
+          </div>
 
           <div
             style={{
@@ -325,9 +354,16 @@ export function TaskKuApp({
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div
+                style={{ display: "flex", gap: 10, position: "relative" }}
+              >
                 <button
-                  className="glass"
+                  type="button"
+                  aria-label="Buka notifikasi"
+                  aria-haspopup="dialog"
+                  aria-expanded={notifOpen}
+                  onClick={() => setNotifOpen((v) => !v)}
+                  className="glass header-icon-btn"
                   style={{
                     width: 40,
                     height: 40,
@@ -337,42 +373,77 @@ export function TaskKuApp({
                     justifyContent: "center",
                     cursor: "pointer",
                     position: "relative",
+                    color: "white",
+                    border: "none",
                   }}
                 >
                   <Bell size={17} />
-                  {stats.today > 0 && (
+                  {activeNotifications.length > 0 && (
                     <span
-                      className="animate-pulse-dot"
+                      aria-label={`${activeNotifications.length} notifikasi baru`}
                       style={{
                         position: "absolute",
-                        top: 8,
-                        right: 8,
-                        width: 7,
-                        height: 7,
-                        background: "#f87171",
-                        borderRadius: "50%",
-                        border: "2px solid rgba(30,64,175,0.8)",
+                        top: -5,
+                        right: -5,
+                        minWidth: 18,
+                        height: 18,
+                        padding: "0 5px",
+                        background:
+                          "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                        borderRadius: 999,
+                        border: "2px solid rgba(30, 64, 175, 0.95)",
+                        boxShadow: "0 2px 6px rgba(220, 38, 38, 0.45)",
+                        fontSize: 10,
+                        fontWeight: 800,
+                        color: "white",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        lineHeight: 1,
                       }}
-                    />
+                    >
+                      {activeNotifications.length > 9
+                        ? "9+"
+                        : activeNotifications.length}
+                    </span>
                   )}
                 </button>
-                <form action={logoutAction}>
-                  <button
-                    type="submit"
-                    className="glass"
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <LogOut size={17} />
-                  </button>
-                </form>
+                <button
+                  type="button"
+                  aria-label={
+                    theme === "dark"
+                      ? "Beralih ke mode terang"
+                      : "Beralih ke mode gelap"
+                  }
+                  aria-pressed={theme === "dark"}
+                  onClick={toggleTheme}
+                  className="glass header-icon-btn"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    color: "white",
+                    border: "none",
+                  }}
+                >
+                  {themeMounted && theme === "dark" ? (
+                    <Sun size={17} />
+                  ) : (
+                    <Moon size={17} />
+                  )}
+                </button>
+                <NotificationPanel
+                  notifications={activeNotifications}
+                  open={notifOpen}
+                  onClose={() => setNotifOpen(false)}
+                  onDismiss={dismissNotification}
+                  onClearAll={clearAllNotifications}
+                  onSelect={handleNotificationSelect}
+                />
               </div>
             </div>
 
@@ -491,7 +562,7 @@ export function TaskKuApp({
                   gap: 10,
                 }}
               >
-                <Search size={16} color="#94a3b8" />
+                <Search size={16} color="var(--foreground-subtle)" />
                 <input
                   defaultValue={search}
                   onChange={(e) => handleSearch(e.target.value)}
@@ -503,16 +574,20 @@ export function TaskKuApp({
                     background: "transparent",
                     fontSize: 14,
                     fontFamily: FONT,
-                    color: "#334155",
+                    color: "var(--foreground)",
                   }}
                 />
                 {search && (
                   <button
+                    type="button"
+                    aria-label="Bersihkan pencarian"
                     onClick={() => handleSearch("")}
                     style={{
                       cursor: "pointer",
-                      color: "#94a3b8",
+                      color: "var(--foreground-subtle)",
                       display: "flex",
+                      background: "transparent",
+                      border: "none",
                     }}
                   >
                     <X size={14} />
@@ -527,7 +602,7 @@ export function TaskKuApp({
                     fontSize: 13,
                     fontWeight: 700,
                     fontFamily: FONT_HEADING,
-                    color: "#475569",
+                    color: "var(--foreground-muted)",
                     marginBottom: 12,
                     paddingLeft: 4,
                   }}
@@ -538,19 +613,89 @@ export function TaskKuApp({
                   <div
                     className="card"
                     style={{
-                      padding: "48px 20px",
+                      padding: "44px 24px 36px",
                       textAlign: "center",
-                      color: "#94a3b8",
+                      color: "var(--foreground-subtle)",
                       borderStyle: "dashed",
                     }}
                   >
-                    <CheckCircle2
-                      size={32}
-                      style={{ margin: "0 auto", opacity: 0.3 }}
-                    />
-                    <p style={{ marginTop: 12, fontSize: 13 }}>
-                      Belum ada tugas. Klik + untuk tambah.
+                    <div
+                      className="animate-float"
+                      style={{
+                        width: 72,
+                        height: 72,
+                        borderRadius: 22,
+                        margin: "0 auto 16px",
+                        background:
+                          "linear-gradient(135deg, var(--notif-pill) 0%, var(--hover-bg) 100%)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--notif-pill-text)",
+                        boxShadow:
+                          "inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 24px -8px rgba(37, 99, 235, 0.25)",
+                      }}
+                    >
+                      <CheckCircle2 size={36} strokeWidth={2} />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 700,
+                        fontFamily: FONT_HEADING,
+                        color: "var(--foreground)",
+                        marginBottom: 4,
+                      }}
+                    >
+                      {search ? "Tidak ada hasil" : "Belum ada tugas"}
                     </p>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "var(--foreground-subtle)",
+                        marginBottom: 16,
+                      }}
+                    >
+                      {search
+                        ? `Tidak ada tugas cocok dengan "${search}".`
+                        : "Mulai dengan menambahkan tugas pertamamu."}
+                    </p>
+                    {!search && (
+                      <button
+                        type="button"
+                        onClick={() => setOpen(true)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "8px 16px",
+                          background:
+                            "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          fontFamily: FONT_HEADING,
+                          cursor: "pointer",
+                          boxShadow:
+                            "0 4px 12px rgba(37, 99, 235, 0.3)",
+                          transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translateY(-1px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 6px 16px rgba(37, 99, 235, 0.4)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 12px rgba(37, 99, 235, 0.3)";
+                        }}
+                      >
+                        <Plus size={14} /> Tambah Tugas
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }} className="stagger-children">
@@ -619,12 +764,12 @@ export function TaskKuApp({
             width: "100%",
             maxWidth: 420,
             zIndex: 20,
-            background: "rgba(255,255,255,0.97)",
+            background: "var(--bottom-nav-bg)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderTop: "1px solid #e2e8f0",
-            borderLeft: "1px solid #e2e8f0",
-            borderRight: "1px solid #e2e8f0",
+            borderTop: "1px solid var(--bottom-nav-border)",
+            borderLeft: "1px solid var(--bottom-nav-border)",
+            borderRight: "1px solid var(--bottom-nav-border)",
             borderRadius: "0",
           }}
         >
@@ -676,14 +821,14 @@ export function TaskKuApp({
                   )}
                   <tab.icon
                     size={22}
-                    color={active ? "#2563EB" : "#94A3B8"}
+                    color={active ? "#2563EB" : "var(--foreground-subtle)"}
                     strokeWidth={active ? 2.3 : 1.8}
                   />
                   <span
                     style={{
                       fontSize: 10,
                       fontWeight: active ? 700 : 500,
-                      color: active ? "#2563EB" : "#94A3B8",
+                      color: active ? "#2563EB" : "var(--foreground-subtle)",
                       fontFamily: FONT,
                     }}
                   >
