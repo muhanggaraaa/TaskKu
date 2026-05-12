@@ -94,12 +94,18 @@ export function ProfileScreen({
             fontSize: 18,
             fontWeight: 800,
             fontFamily: FONT_HEADING,
-            color: "#0f172a",
+            color: "var(--foreground)",
           }}
         >
           {user}
         </h3>
-        <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>
+        <p
+          style={{
+            fontSize: 12,
+            color: "var(--foreground-subtle)",
+            marginTop: 2,
+          }}
+        >
           Pengguna TaskKu
         </p>
       </div>
@@ -114,7 +120,13 @@ export function ProfileScreen({
             marginBottom: 12,
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#475569" }}>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "var(--foreground-muted)",
+            }}
+          >
             Progress Keseluruhan
           </span>
           <span
@@ -131,7 +143,7 @@ export function ProfileScreen({
         <div
           style={{
             height: 8,
-            background: "#f1f5f9",
+            background: "var(--hover-bg)",
             borderRadius: 20,
             overflow: "hidden",
           }}
@@ -154,13 +166,23 @@ export function ProfileScreen({
             marginTop: 16,
           }}
         >
-          <Stat label="Total" val={stats.total} color="#2563EB" bg="#eff6ff" />
-          <Stat label="Selesai" val={stats.done} color="#10B981" bg="#ecfdf5" />
+          <Stat
+            label="Total"
+            val={stats.total}
+            color="#2563EB"
+            bg="rgba(37, 99, 235, 0.10)"
+          />
+          <Stat
+            label="Selesai"
+            val={stats.done}
+            color="#10B981"
+            bg="rgba(16, 185, 129, 0.10)"
+          />
           <Stat
             label="Overdue"
             val={stats.overdue}
             color="#EF4444"
-            bg="#fef2f2"
+            bg="rgba(239, 68, 68, 0.10)"
           />
         </div>
       </div>
@@ -171,22 +193,32 @@ export function ProfileScreen({
           style={{
             fontSize: 13,
             fontWeight: 700,
-            color: "#475569",
+            color: "var(--foreground-muted)",
             marginBottom: 8,
           }}
         >
           Tentang TaskKu
         </h4>
-        <p style={{ fontSize: 12, color: "#64748b", lineHeight: 1.7 }}>
+        <p
+          style={{
+            fontSize: 12,
+            color: "var(--foreground-muted)",
+            lineHeight: 1.7,
+          }}
+        >
           Aplikasi manajemen tugas yang menerapkan{" "}
-          <strong style={{ color: "#334155" }}>Professional Upgrade</strong>:
-          proteksi rute dengan{" "}
-          <strong style={{ color: "#334155" }}>Proxy</strong>, validasi data
-          dengan <strong style={{ color: "#334155" }}>Zod</strong>, pencarian
-          persisten via{" "}
-          <strong style={{ color: "#334155" }}>URL as State</strong>, dan{" "}
-          <strong style={{ color: "#334155" }}>Optimistic UI</strong> untuk UX
-          yang responsif.
+          <strong style={{ color: "var(--foreground)" }}>
+            Professional Upgrade
+          </strong>
+          : proteksi rute dengan{" "}
+          <strong style={{ color: "var(--foreground)" }}>Proxy</strong>,
+          validasi data dengan{" "}
+          <strong style={{ color: "var(--foreground)" }}>Zod</strong>,
+          pencarian persisten via{" "}
+          <strong style={{ color: "var(--foreground)" }}>URL as State</strong>,
+          dan{" "}
+          <strong style={{ color: "var(--foreground)" }}>Optimistic UI</strong>{" "}
+          untuk UX yang responsif.
         </p>
         <div
           style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}
@@ -204,8 +236,8 @@ export function ProfileScreen({
               key={tag}
               style={{
                 padding: "4px 10px",
-                background: "#eff6ff",
-                color: "#2563eb",
+                background: "var(--notif-pill)",
+                color: "var(--notif-pill-text)",
                 borderRadius: 20,
                 fontSize: 10,
                 fontWeight: 700,
@@ -226,7 +258,7 @@ export function ProfileScreen({
             padding: "14px 0",
             border: "2px solid #fecaca",
             borderRadius: 16,
-            background: "white",
+            background: "var(--card-bg)",
             color: "#dc2626",
             fontSize: 14,
             fontWeight: 700,
@@ -236,12 +268,6 @@ export function ProfileScreen({
             justifyContent: "center",
             gap: 8,
             transition: "all 0.15s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#fef2f2";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "white";
           }}
         >
           <LogOut size={16} /> Keluar

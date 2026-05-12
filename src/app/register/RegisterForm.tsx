@@ -1,27 +1,27 @@
 "use client";
 
 /**
- * LoginForm — Client Component
+ * RegisterForm — Client Component
  *
- * Form login dengan UI yang sama seperti sebelumnya.
- * Memanggil loginAction (Server Action) untuk set session cookie.
+ * Form registrasi akun baru dengan validasi sisi server.
  */
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { Check, LogIn, Sparkles, Loader2 } from "lucide-react";
+import { Check, UserPlus, Sparkles, Loader2 } from "lucide-react";
 import { FONT, FONT_HEADING } from "@/lib/types";
-import { loginAction } from "@/lib/actions/auth-actions";
+import { registerAction } from "@/lib/actions/auth-actions";
 
-export function LoginForm() {
+export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
-      const result = await loginAction(undefined, formData);
+      const result = await registerAction(undefined, formData);
       if (result?.error) {
         setError(result.error);
       }
@@ -82,7 +82,7 @@ export function LoginForm() {
         <div
           style={{
             flex: "0 0 auto",
-            padding: "48px 24px 36px",
+            padding: "40px 24px 24px",
             textAlign: "center",
             color: "white",
             position: "relative",
@@ -92,10 +92,10 @@ export function LoginForm() {
           <div
             className="animate-float"
             style={{
-              width: 64,
-              height: 64,
-              borderRadius: 18,
-              margin: "0 auto 16px",
+              width: 56,
+              height: 56,
+              borderRadius: 16,
+              margin: "0 auto 12px",
               background: "rgba(255,255,255,0.15)",
               backdropFilter: "blur(12px)",
               border: "1px solid rgba(255,255,255,0.2)",
@@ -105,27 +105,27 @@ export function LoginForm() {
               boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             }}
           >
-            <Check size={28} color="white" strokeWidth={3} />
+            <Check size={24} color="white" strokeWidth={3} />
           </div>
           <h1
             style={{
-              fontSize: 28,
+              fontSize: 24,
               fontWeight: 800,
               fontFamily: FONT_HEADING,
               letterSpacing: "-0.02em",
             }}
           >
-            TaskKu
+            Daftar Akun TaskKu
           </h1>
           <p
             style={{
-              fontSize: 13,
+              fontSize: 12,
               opacity: 0.75,
-              marginTop: 6,
+              marginTop: 4,
               fontWeight: 400,
             }}
           >
-            Atur Tugasmu, Raih Nilaimu
+            Buat akun baru untuk mulai mengatur tugasmu
           </p>
         </div>
 
@@ -136,7 +136,7 @@ export function LoginForm() {
             flex: 1,
             background: "#f8fafc",
             borderRadius: "28px 28px 0 0",
-            padding: "32px 24px 40px",
+            padding: "28px 24px 32px",
             position: "relative",
             zIndex: 1,
             boxShadow: "0 -4px 30px rgba(0,0,0,0.08)",
@@ -146,22 +146,22 @@ export function LoginForm() {
         >
           <h2
             style={{
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: 800,
               fontFamily: FONT_HEADING,
               color: "#0f172a",
               marginBottom: 4,
             }}
           >
-            Selamat Datang!
+            Buat Akun Baru
           </h2>
-          <p style={{ fontSize: 13, color: "#94a3b8", marginBottom: 24 }}>
-            Masuk untuk mengelola tugasmu
+          <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 20 }}>
+            Lengkapi data berikut untuk mendaftar
           </p>
 
-          {/* Error message */}
           {error && (
             <div
+              role="alert"
               style={{
                 padding: "10px 14px",
                 background: "#fef2f2",
@@ -170,7 +170,7 @@ export function LoginForm() {
                 color: "#dc2626",
                 fontSize: 13,
                 fontWeight: 600,
-                marginBottom: 16,
+                marginBottom: 14,
               }}
             >
               {error}
@@ -179,12 +179,30 @@ export function LoginForm() {
 
           <form
             onSubmit={handleSubmit}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 16,
-            }}
+            style={{ display: "flex", flexDirection: "column", gap: 12 }}
           >
+            <div>
+              <label
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#475569",
+                  marginBottom: 6,
+                  display: "block",
+                }}
+              >
+                Nama Lengkap
+              </label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Nama kamu"
+                className="input-field"
+                disabled={pending}
+                required
+                minLength={2}
+              />
+            </div>
             <div>
               <label
                 style={{
@@ -203,6 +221,7 @@ export function LoginForm() {
                 placeholder="email@kampus.ac.id"
                 className="input-field"
                 disabled={pending}
+                required
               />
             </div>
             <div>
@@ -220,24 +239,48 @@ export function LoginForm() {
               <input
                 type="password"
                 name="password"
-                placeholder="••••••••"
+                placeholder="Minimal 6 karakter"
                 className="input-field"
                 disabled={pending}
+                required
+                minLength={6}
+              />
+            </div>
+            <div>
+              <label
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#475569",
+                  marginBottom: 6,
+                  display: "block",
+                }}
+              >
+                Konfirmasi Password
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Ulangi password"
+                className="input-field"
+                disabled={pending}
+                required
+                minLength={6}
               />
             </div>
             <button
               type="submit"
               className="btn-primary"
-              style={{ marginTop: 4 }}
+              style={{ marginTop: 8 }}
               disabled={pending}
             >
               {pending ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" /> Masuk…
+                  <Loader2 size={18} className="animate-spin" /> Mendaftar…
                 </>
               ) : (
                 <>
-                  <LogIn size={18} /> Masuk
+                  <UserPlus size={18} /> Daftar Sekarang
                 </>
               )}
             </button>
@@ -251,16 +294,16 @@ export function LoginForm() {
               color: "#475569",
             }}
           >
-            Belum punya akun?{" "}
+            Sudah punya akun?{" "}
             <Link
-              href="/register"
+              href="/login"
               style={{
                 color: "#2563eb",
                 fontWeight: 700,
                 textDecoration: "none",
               }}
             >
-              Daftar di sini
+              Masuk di sini
             </Link>
           </div>
 
@@ -268,7 +311,7 @@ export function LoginForm() {
           <div
             style={{
               marginTop: "auto",
-              paddingTop: 24,
+              paddingTop: 20,
               display: "flex",
               justifyContent: "center",
               gap: 16,
@@ -276,23 +319,11 @@ export function LoginForm() {
               color: "#94a3b8",
             }}
           >
-            <span
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <Check size={10} /> TaskKu
             </span>
             <span style={{ opacity: 0.4 }}>•</span>
-            <span
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
+            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
               <Sparkles size={10} /> Professional Upgrade
             </span>
           </div>

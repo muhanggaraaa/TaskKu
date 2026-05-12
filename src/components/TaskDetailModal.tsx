@@ -57,7 +57,7 @@ export function TaskDetailModal({
         className="animate-slide-up"
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: "white",
+          background: "var(--card-bg)",
           width: "100%",
           maxWidth: 420,
           borderRadius: "24px 24px 0 0",
@@ -72,7 +72,7 @@ export function TaskDetailModal({
           style={{
             width: 36,
             height: 4,
-            background: "#e2e8f0",
+            background: "var(--card-border)",
             borderRadius: 4,
             margin: "0 auto 16px",
           }}
@@ -94,7 +94,7 @@ export function TaskDetailModal({
                 fontSize: 20,
                 fontWeight: 800,
                 fontFamily: FONT_HEADING,
-                color: "#0f172a",
+                color: "var(--foreground)",
                 lineHeight: 1.3,
                 wordBreak: "break-word",
               }}
@@ -112,8 +112,8 @@ export function TaskDetailModal({
             onClick={onClose}
             style={{
               cursor: "pointer",
-              color: "#94a3b8",
-              background: "#f1f5f9",
+              color: "var(--foreground-subtle)",
+              background: "var(--hover-bg)",
               border: "none",
               borderRadius: 10,
               width: 32,
@@ -132,7 +132,7 @@ export function TaskDetailModal({
         {task.description && (
           <div
             style={{
-              background: "#f8fafc",
+              background: "var(--info-item-bg)",
               borderRadius: 16,
               padding: "14px 16px",
               marginBottom: 16,
@@ -142,7 +142,7 @@ export function TaskDetailModal({
               style={{
                 fontSize: 10,
                 fontWeight: 600,
-                color: "#94a3b8",
+                color: "var(--foreground-subtle)",
                 textTransform: "uppercase" as const,
                 letterSpacing: "0.05em",
                 marginBottom: 6,
@@ -166,7 +166,7 @@ export function TaskDetailModal({
             </div>
             <div
               className="info-value"
-              style={{ color: overdue && !task.done ? "#DC2626" : "#1e293b" }}
+              style={{ color: overdue && !task.done ? "#DC2626" : "var(--foreground)" }}
             >
               {formatDate(task.dueDate)}
               {overdue && !task.done && (

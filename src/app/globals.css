@@ -7,11 +7,60 @@
 :root {
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-heading: 'Poppins', -apple-system, sans-serif;
-  --background: #f1f5f9;
-  --foreground: #0f172a;
   --blue-primary: #2563EB;
   --blue-dark: #1d4ed8;
   --indigo: #4f46e5;
+
+  /* Light theme (default) */
+  --background: #f1f5f9;
+  --background-elevated: #e2e8f0;
+  --app-container-bg: #f8fafc;
+  --foreground: #0f172a;
+  --foreground-muted: #475569;
+  --foreground-subtle: #94a3b8;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --input-bg: #f8fafc;
+  --input-bg-focus: #ffffff;
+  --input-border: #e2e8f0;
+  --info-item-bg: #f8fafc;
+  --hover-bg: #f1f5f9;
+  --skeleton-bg: #e2e8f0;
+  --skeleton-bg-soft: #f1f5f9;
+  --bottom-nav-bg: rgba(255, 255, 255, 0.97);
+  --bottom-nav-border: #e2e8f0;
+  --notif-pill: #eff6ff;
+  --notif-pill-text: #2563eb;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+}
+
+[data-theme="dark"] {
+  --background: #0b1220;
+  --background-elevated: #060a14;
+  --app-container-bg: #0f172a;
+  --foreground: #e2e8f0;
+  --foreground-muted: #cbd5e1;
+  --foreground-subtle: #64748b;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.25);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --input-bg: #0f172a;
+  --input-bg-focus: #1e293b;
+  --input-border: #334155;
+  --info-item-bg: #0f172a;
+  --hover-bg: #334155;
+  --skeleton-bg: #334155;
+  --skeleton-bg-soft: #1e293b;
+  --bottom-nav-bg: rgba(15, 23, 42, 0.97);
+  --bottom-nav-border: #334155;
+  --notif-pill: rgba(37, 99, 235, 0.18);
+  --notif-pill-text: #93c5fd;
+  --scrollbar-thumb: #475569;
+  --scrollbar-thumb-hover: #64748b;
 }
 
 /* ==================== BASE STYLES ==================== */
@@ -33,6 +82,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* ==================== ANIMATIONS ==================== */
@@ -141,19 +191,21 @@ body {
 
 /* ==================== CARD STYLES ==================== */
 .card {
-  background: white;
+  background: var(--card-bg);
+  color: var(--foreground);
   border-radius: 20px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
-  transition: all 0.2s ease;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--card-shadow-hover);
 }
 
 .card-elevated {
-  background: white;
+  background: var(--card-bg);
+  color: var(--foreground);
   border-radius: 24px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
 }
@@ -162,24 +214,24 @@ body {
 .input-field {
   width: 100%;
   padding: 14px 18px;
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
   border-radius: 16px;
   font-size: 15px;
   font-family: var(--font-body);
-  color: #0f172a;
+  color: var(--foreground);
   outline: none;
   transition: all 0.2s ease;
 }
 
 .input-field::placeholder {
-  color: #94a3b8;
+  color: var(--foreground-subtle);
 }
 
 .input-field:focus {
   border-color: var(--blue-primary);
-  background: white;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+  background: var(--input-bg-focus);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
 .input-field:disabled {
@@ -230,11 +282,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--scrollbar-thumb);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* ==================== SELECTION ==================== */
@@ -261,12 +313,12 @@ nav .app-container,
 @media (min-width: 768px) {
   .app-container {
     max-width: 420px;
-    box-shadow: -1px 0 0 #e2e8f0, 1px 0 0 #e2e8f0;
-    background: #f8fafc;
+    box-shadow: -1px 0 0 var(--card-border), 1px 0 0 var(--card-border);
+    background: var(--app-container-bg);
   }
-  
+
   body {
-    background: #e2e8f0;
+    background: var(--background-elevated);
   }
 }
 
@@ -358,9 +410,9 @@ nav .app-container,
   gap: 8px;
   width: 100%;
   padding: 12px 20px;
-  background: white;
-  color: #475569;
-  border: 2px solid #e2e8f0;
+  background: var(--card-bg);
+  color: var(--foreground-muted);
+  border: 2px solid var(--card-border);
   border-radius: 14px;
   font-size: 14px;
   font-weight: 700;
@@ -370,8 +422,8 @@ nav .app-container,
 }
 
 .btn-secondary:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: var(--hover-bg);
+  border-color: var(--scrollbar-thumb);
 }
 
 .btn-ghost {
@@ -381,7 +433,7 @@ nav .app-container,
   gap: 6px;
   padding: 10px 16px;
   background: transparent;
-  color: #64748b;
+  color: var(--foreground-muted);
   border: none;
   border-radius: 12px;
   font-size: 13px;
@@ -392,8 +444,8 @@ nav .app-container,
 }
 
 .btn-ghost:hover {
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--hover-bg);
+  color: var(--foreground);
 }
 
 /* ==================== INFO GRID ==================== */
@@ -404,7 +456,7 @@ nav .app-container,
 }
 
 .info-item {
-  background: #f8fafc;
+  background: var(--info-item-bg);
   border-radius: 14px;
   padding: 12px 14px;
 }
@@ -412,7 +464,7 @@ nav .app-container,
 .info-label {
   font-size: 10px;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--foreground-subtle);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 4px;
@@ -421,14 +473,14 @@ nav .app-container,
 .info-value {
   font-size: 13px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--foreground);
   font-family: var(--font-heading);
 }
 
 /* ==================== DETAIL MODAL DESCRIPTION ==================== */
 .detail-description {
   font-size: 13px;
-  color: #475569;
+  color: var(--foreground-muted);
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
