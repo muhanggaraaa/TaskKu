@@ -220,14 +220,14 @@ export function NotificationPanel({
         position: "absolute",
         top: 52,
         right: 0,
-        width: "min(320px, calc(100vw - 32px))",
-        maxHeight: 420,
+        width: "min(340px, calc(100vw - 32px))",
+        maxHeight: 440,
         background: "var(--card-bg)",
         color: "var(--foreground)",
         border: "1px solid var(--card-border)",
-        borderRadius: 16,
+        borderRadius: 18,
         boxShadow:
-          "0 12px 32px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.10)",
+          "0 16px 40px rgba(0,0,0,0.22), 0 6px 14px rgba(0,0,0,0.12)",
         zIndex: 50,
         overflow: "hidden",
         display: "flex",
@@ -242,6 +242,8 @@ export function NotificationPanel({
           justifyContent: "space-between",
           padding: "14px 16px",
           borderBottom: "1px solid var(--card-border)",
+          background:
+            "linear-gradient(180deg, var(--hover-bg) 0%, transparent 100%)",
         }}
       >
         <div
@@ -281,7 +283,17 @@ export function NotificationPanel({
               cursor: "pointer",
               fontSize: 11,
               fontWeight: 700,
-              padding: 4,
+              padding: "4px 8px",
+              borderRadius: 8,
+              transition: "background 0.15s ease, color 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--hover-bg)";
+              e.currentTarget.style.color = "var(--foreground)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = "var(--foreground-subtle)";
             }}
           >
             Hapus Semua
@@ -298,123 +310,201 @@ export function NotificationPanel({
         {notifications.length === 0 ? (
           <div
             style={{
-              padding: "32px 20px",
+              padding: "40px 24px",
               textAlign: "center",
               color: "var(--foreground-subtle)",
               fontSize: 13,
             }}
           >
-            <Bell
-              size={28}
-              style={{ margin: "0 auto 8px", opacity: 0.4 }}
-            />
-            <div style={{ fontWeight: 600 }}>Tidak ada notifikasi</div>
-            <div style={{ marginTop: 4, fontSize: 11 }}>
-              Semua tugas sudah tertangani 👍
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 18,
+                background: "var(--hover-bg)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 12px",
+              }}
+            >
+              <CheckCircle2
+                size={28}
+                style={{ color: "var(--notif-pill-text)" }}
+              />
+            </div>
+            <div
+              style={{
+                fontWeight: 700,
+                fontFamily: FONT_HEADING,
+                color: "var(--foreground)",
+                fontSize: 14,
+              }}
+            >
+              Semua bersih!
+            </div>
+            <div style={{ marginTop: 4, fontSize: 12 }}>
+              Tidak ada notifikasi baru saat ini.
             </div>
           </div>
         ) : (
-          notifications.map((n) => {
+          notifications.map((n, idx) => {
             const meta = KIND_META[n.kind];
             const Icon = meta.icon;
+            const isLast = idx === notifications.length - 1;
             return (
-              <button
+              <div
                 key={n.id}
-                type="button"
-                onClick={() => {
-                  onSelect(n.taskId);
-                  onClose();
-                }}
                 style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  padding: "12px 14px",
-                  width: "100%",
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: "1px solid var(--card-border)",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontFamily: FONT,
-                  color: "var(--foreground)",
-                  transition: "background 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--hover-bg)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
+                  position: "relative",
+                  borderBottom: isLast
+                    ? "none"
+                    : "1px solid var(--card-border)",
                 }}
               >
-                <div
+                {/* Colored left edge marker for visual category grouping */}
+                <span
+                  aria-hidden
                   style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
-                    background: meta.bg,
-                    color: meta.color,
+                    position: "absolute",
+                    left: 0,
+                    top: 8,
+                    bottom: 8,
+                    width: 3,
+                    borderRadius: 2,
+                    background: meta.color,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelect(n.taskId);
+                    onClose();
+                  }}
+                  style={{
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    alignItems: "flex-start",
+                    gap: 10,
+                    padding: "12px 14px 12px 16px",
+                    width: "100%",
+                    background: "transparent",
+                    border: "none",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    fontFamily: FONT,
+                    color: "var(--foreground)",
+                    transition: "background 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--hover-bg)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
                   }}
                 >
-                  <Icon size={16} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: "var(--foreground)",
-                      fontFamily: FONT_HEADING,
+                      width: 34,
+                      height: 34,
+                      borderRadius: 10,
+                      background: meta.bg,
+                      color: meta.color,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
                     }}
                   >
-                    {n.title}
+                    <Icon size={16} />
                   </div>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "var(--foreground-muted)",
-                      marginTop: 2,
-                      lineHeight: 1.4,
-                      overflow: "hidden",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {n.message}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "var(--foreground)",
+                          fontFamily: FONT_HEADING,
+                        }}
+                      >
+                        {n.title}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontWeight: 700,
+                          letterSpacing: "0.04em",
+                          textTransform: "uppercase" as const,
+                          padding: "2px 6px",
+                          borderRadius: 6,
+                          background: meta.bg,
+                          color: meta.color,
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {meta.label}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: "var(--foreground-muted)",
+                        marginTop: 2,
+                        lineHeight: 1.4,
+                        overflow: "hidden",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
+                      {n.message}
+                    </div>
                   </div>
-                </div>
-                <span
-                  role="button"
-                  aria-label="Tutup notifikasi"
-                  tabIndex={0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDismiss(n.id);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
+                  <span
+                    role="button"
+                    aria-label="Tutup notifikasi"
+                    tabIndex={0}
+                    onClick={(e) => {
                       e.stopPropagation();
                       onDismiss(n.id);
-                    }
-                  }}
-                  style={{
-                    color: "var(--foreground-subtle)",
-                    padding: 4,
-                    borderRadius: 6,
-                    flexShrink: 0,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                  }}
-                >
-                  <X size={14} />
-                </span>
-              </button>
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDismiss(n.id);
+                      }
+                    }}
+                    style={{
+                      color: "var(--foreground-subtle)",
+                      padding: 4,
+                      borderRadius: 6,
+                      flexShrink: 0,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      transition: "background 0.15s ease, color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "var(--hover-bg)";
+                      e.currentTarget.style.color = "var(--foreground)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color =
+                        "var(--foreground-subtle)";
+                    }}
+                  >
+                    <X size={14} />
+                  </span>
+                </button>
+              </div>
             );
           })
         )}

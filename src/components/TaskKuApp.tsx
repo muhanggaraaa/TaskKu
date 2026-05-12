@@ -355,7 +355,7 @@ export function TaskKuApp({
                 </div>
               </div>
               <div
-                style={{ display: "flex", gap: 8, position: "relative" }}
+                style={{ display: "flex", gap: 10, position: "relative" }}
               >
                 <button
                   type="button"
@@ -363,7 +363,7 @@ export function TaskKuApp({
                   aria-haspopup="dialog"
                   aria-expanded={notifOpen}
                   onClick={() => setNotifOpen((v) => !v)}
-                  className="glass"
+                  className="glass header-icon-btn"
                   style={{
                     width: 40,
                     height: 40,
@@ -383,14 +383,16 @@ export function TaskKuApp({
                       aria-label={`${activeNotifications.length} notifikasi baru`}
                       style={{
                         position: "absolute",
-                        top: -4,
-                        right: -4,
+                        top: -5,
+                        right: -5,
                         minWidth: 18,
                         height: 18,
                         padding: "0 5px",
-                        background: "#ef4444",
+                        background:
+                          "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
                         borderRadius: 999,
-                        border: "2px solid rgba(30,64,175,0.85)",
+                        border: "2px solid rgba(30, 64, 175, 0.95)",
+                        boxShadow: "0 2px 6px rgba(220, 38, 38, 0.45)",
                         fontSize: 10,
                         fontWeight: 800,
                         color: "white",
@@ -415,7 +417,7 @@ export function TaskKuApp({
                   }
                   aria-pressed={theme === "dark"}
                   onClick={toggleTheme}
-                  className="glass"
+                  className="glass header-icon-btn"
                   style={{
                     width: 40,
                     height: 40,
@@ -611,19 +613,89 @@ export function TaskKuApp({
                   <div
                     className="card"
                     style={{
-                      padding: "48px 20px",
+                      padding: "44px 24px 36px",
                       textAlign: "center",
                       color: "var(--foreground-subtle)",
                       borderStyle: "dashed",
                     }}
                   >
-                    <CheckCircle2
-                      size={32}
-                      style={{ margin: "0 auto", opacity: 0.3 }}
-                    />
-                    <p style={{ marginTop: 12, fontSize: 13 }}>
-                      Belum ada tugas. Klik + untuk tambah.
+                    <div
+                      className="animate-float"
+                      style={{
+                        width: 72,
+                        height: 72,
+                        borderRadius: 22,
+                        margin: "0 auto 16px",
+                        background:
+                          "linear-gradient(135deg, var(--notif-pill) 0%, var(--hover-bg) 100%)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--notif-pill-text)",
+                        boxShadow:
+                          "inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 24px -8px rgba(37, 99, 235, 0.25)",
+                      }}
+                    >
+                      <CheckCircle2 size={36} strokeWidth={2} />
+                    </div>
+                    <p
+                      style={{
+                        fontSize: 15,
+                        fontWeight: 700,
+                        fontFamily: FONT_HEADING,
+                        color: "var(--foreground)",
+                        marginBottom: 4,
+                      }}
+                    >
+                      {search ? "Tidak ada hasil" : "Belum ada tugas"}
                     </p>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "var(--foreground-subtle)",
+                        marginBottom: 16,
+                      }}
+                    >
+                      {search
+                        ? `Tidak ada tugas cocok dengan "${search}".`
+                        : "Mulai dengan menambahkan tugas pertamamu."}
+                    </p>
+                    {!search && (
+                      <button
+                        type="button"
+                        onClick={() => setOpen(true)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "8px 16px",
+                          background:
+                            "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: 999,
+                          fontSize: 12,
+                          fontWeight: 700,
+                          fontFamily: FONT_HEADING,
+                          cursor: "pointer",
+                          boxShadow:
+                            "0 4px 12px rgba(37, 99, 235, 0.3)",
+                          transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translateY(-1px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 6px 16px rgba(37, 99, 235, 0.4)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translateY(0)";
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 12px rgba(37, 99, 235, 0.3)";
+                        }}
+                      >
+                        <Plus size={14} /> Tambah Tugas
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }} className="stagger-children">

@@ -6,6 +6,7 @@ import type { Task } from "@/lib/types";
 import { PRIORITIES, CATEGORIES, FONT_HEADING, FONT } from "@/lib/types";
 import { updateTaskAction } from "@/lib/actions/task-actions";
 import type { TaskFieldErrors } from "@/lib/schemas";
+import { todayISO } from "@/lib/utils";
 
 export function EditTaskModal({
   task,
@@ -302,6 +303,56 @@ export function EditTaskModal({
                   borderColor: fieldErrors.dueDate ? "#ef4444" : undefined,
                 }}
               />
+              {/* Quick-pick chips */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  marginTop: 6,
+                  flexWrap: "wrap",
+                }}
+              >
+                {(() => {
+                  const today = todayISO();
+                  const t = new Date();
+                  t.setDate(t.getDate() + 1);
+                  const tomorrow = t.toISOString().slice(0, 10);
+                  const w = new Date();
+                  w.setDate(w.getDate() + 7);
+                  const nextWeek = w.toISOString().slice(0, 10);
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        className="date-chip"
+                        data-active={dueDate === today}
+                        disabled={submitting}
+                        onClick={() => setDueDate(today)}
+                      >
+                        Hari Ini
+                      </button>
+                      <button
+                        type="button"
+                        className="date-chip"
+                        data-active={dueDate === tomorrow}
+                        disabled={submitting}
+                        onClick={() => setDueDate(tomorrow)}
+                      >
+                        Besok
+                      </button>
+                      <button
+                        type="button"
+                        className="date-chip"
+                        data-active={dueDate === nextWeek}
+                        disabled={submitting}
+                        onClick={() => setDueDate(nextWeek)}
+                      >
+                        + 7 hari
+                      </button>
+                    </>
+                  );
+                })()}
+              </div>
               {fieldErrors.dueDate && (
                 <p
                   style={{

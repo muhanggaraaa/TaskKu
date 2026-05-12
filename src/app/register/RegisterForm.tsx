@@ -8,13 +8,15 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { Check, UserPlus, Sparkles, Loader2 } from "lucide-react";
+import { Check, UserPlus, Sparkles, Loader2, Moon, Sun } from "lucide-react";
 import { FONT, FONT_HEADING } from "@/lib/types";
 import { registerAction } from "@/lib/actions/auth-actions";
+import { useTheme } from "@/lib/useTheme";
 
 export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { theme, toggleTheme, mounted: themeMounted } = useTheme();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,7 +32,11 @@ export function RegisterForm() {
 
   return (
     <div
-      style={{ fontFamily: FONT, minHeight: "100dvh", background: "#e2e8f0" }}
+      style={{
+        fontFamily: FONT,
+        minHeight: "100dvh",
+        background: "var(--background-elevated)",
+      }}
     >
       <div
         className="app-container"
@@ -77,6 +83,40 @@ export function RegisterForm() {
             background: "rgba(255,255,255,0.03)",
           }}
         />
+
+        {/* Theme toggle (top-right) */}
+        <button
+          type="button"
+          aria-label={
+            theme === "dark"
+              ? "Beralih ke mode terang"
+              : "Beralih ke mode gelap"
+          }
+          aria-pressed={theme === "dark"}
+          onClick={toggleTheme}
+          className="glass"
+          style={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            width: 38,
+            height: 38,
+            borderRadius: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            zIndex: 2,
+          }}
+        >
+          {themeMounted && theme === "dark" ? (
+            <Sun size={16} />
+          ) : (
+            <Moon size={16} />
+          )}
+        </button>
 
         {/* Top section — branding */}
         <div
@@ -129,17 +169,18 @@ export function RegisterForm() {
           </p>
         </div>
 
-        {/* Bottom section — white card form */}
+        {/* Bottom section — card form (theme-aware) */}
         <div
           className="animate-slide-up"
           style={{
             flex: 1,
-            background: "#f8fafc",
+            background: "var(--card-bg)",
+            color: "var(--foreground)",
             borderRadius: "28px 28px 0 0",
             padding: "28px 24px 32px",
             position: "relative",
             zIndex: 1,
-            boxShadow: "0 -4px 30px rgba(0,0,0,0.08)",
+            boxShadow: "0 -4px 30px rgba(0,0,0,0.18)",
             display: "flex",
             flexDirection: "column",
           }}
@@ -149,13 +190,13 @@ export function RegisterForm() {
               fontSize: 18,
               fontWeight: 800,
               fontFamily: FONT_HEADING,
-              color: "#0f172a",
+              color: "var(--foreground)",
               marginBottom: 4,
             }}
           >
             Buat Akun Baru
           </h2>
-          <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 20 }}>
+          <p style={{ fontSize: 12, color: "var(--foreground-subtle)", marginBottom: 20 }}>
             Lengkapi data berikut untuk mendaftar
           </p>
 
@@ -164,8 +205,8 @@ export function RegisterForm() {
               role="alert"
               style={{
                 padding: "10px 14px",
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
+                background: "rgba(220, 38, 38, 0.10)",
+                border: "1px solid rgba(220, 38, 38, 0.30)",
                 borderRadius: 12,
                 color: "#dc2626",
                 fontSize: 13,
@@ -186,7 +227,7 @@ export function RegisterForm() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "#475569",
+                  color: "var(--foreground-muted)",
                   marginBottom: 6,
                   display: "block",
                 }}
@@ -208,7 +249,7 @@ export function RegisterForm() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "#475569",
+                  color: "var(--foreground-muted)",
                   marginBottom: 6,
                   display: "block",
                 }}
@@ -229,7 +270,7 @@ export function RegisterForm() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "#475569",
+                  color: "var(--foreground-muted)",
                   marginBottom: 6,
                   display: "block",
                 }}
@@ -251,7 +292,7 @@ export function RegisterForm() {
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "#475569",
+                  color: "var(--foreground-muted)",
                   marginBottom: 6,
                   display: "block",
                 }}
@@ -291,14 +332,14 @@ export function RegisterForm() {
               marginTop: 16,
               textAlign: "center",
               fontSize: 13,
-              color: "#475569",
+              color: "var(--foreground-muted)",
             }}
           >
             Sudah punya akun?{" "}
             <Link
               href="/login"
               style={{
-                color: "#2563eb",
+                color: "var(--notif-pill-text)",
                 fontWeight: 700,
                 textDecoration: "none",
               }}
@@ -316,7 +357,7 @@ export function RegisterForm() {
               justifyContent: "center",
               gap: 16,
               fontSize: 11,
-              color: "#94a3b8",
+              color: "var(--foreground-subtle)",
             }}
           >
             <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
