@@ -272,32 +272,43 @@ export function TaskKuApp({
               "linear-gradient(135deg, #1e40af 0%, #4338ca 50%, #6366f1 100%)",
             color: "white",
             position: "relative",
-            overflow: "hidden",
           }}
         >
-          {/* Decorative circle */}
+          {/* Decorative circles — wrapped in their own clipping layer so the
+              header itself can keep overflow:visible (needed for the
+              notification panel dropdown to escape the gradient bounds). */}
           <div
+            aria-hidden
             style={{
               position: "absolute",
-              top: -60,
-              right: -40,
-              width: 180,
-              height: 180,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.06)",
+              inset: 0,
+              overflow: "hidden",
+              pointerEvents: "none",
             }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: -30,
-              left: -20,
-              width: 120,
-              height: 120,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.04)",
-            }}
-          />
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: -60,
+                right: -40,
+                width: 180,
+                height: 180,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.06)",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                bottom: -30,
+                left: -20,
+                width: 120,
+                height: 120,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.04)",
+              }}
+            />
+          </div>
 
           <div
             style={{
