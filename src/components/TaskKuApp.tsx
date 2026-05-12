@@ -21,6 +21,7 @@ import {
   useState,
   useOptimistic,
   useCallback,
+  useRef,
   startTransition,
 } from "react";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
@@ -38,9 +39,11 @@ import {
   Clock,
   Search,
   X,
+  ArrowUpDown,
+  Flag,
 } from "lucide-react";
 import type { Task, Screen } from "@/lib/types";
-import { FONT, FONT_HEADING } from "@/lib/types";
+import { FONT, FONT_HEADING, CATEGORIES, PRIORITIES } from "@/lib/types";
 import { todayISO } from "@/lib/utils";
 import { toggleTaskAction, deleteTaskAction } from "@/lib/actions/task-actions";
 import { useTheme } from "@/lib/useTheme";
@@ -67,9 +70,11 @@ type OptimisticAction =
 export function TaskKuApp({
   initialTasks,
   user,
+  userEmail = "",
 }: {
   initialTasks: Task[];
   user: string;
+  userEmail?: string;
 }) {
   const [screen, setScreen] = useState<Screen>("home");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
@@ -83,6 +88,12 @@ export function TaskKuApp({
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
+  const bellRef = useRef<HTMLButtonElement>(null);
+  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const [filterPriority, setFilterPriority] = useState<Task["priority"] | null>(
+    null,
+  );
+  const [sortBy, setSortBy] = useState<"date" | "priority" | "name">("date");
 
   // === Task 3: URL as State — Search via URL search params ===
   const searchParams = useSearchParams();
@@ -225,17 +236,54 @@ export function TaskKuApp({
     );
   };
 
-  // Filter menggunakan optimisticTasks (bukan tasks) agar sinkron
-  const filteredTasks = useMemo(() => {
+  // Filter, sort, dan group tasks
+  const processedTasks = useMemo(() => {
+    let result = optimisticTasks;
     const q = search.trim().toLowerCase();
-    if (!q) return optimisticTasks;
-    return optimisticTasks.filter(
-      (t) =>
-        t.title.toLowerCase().includes(q) ||
-        t.description.toLowerCase().includes(q) ||
-        t.category.toLowerCase().includes(q),
-    );
-  }, [optimisticTasks, search]);
+    if (q) {
+      result = result.filter(
+        (t) =>
+          t.title.toLowerCase().includes(q) ||
+          t.description.toLowerCase().includes(q) ||
+          t.category.toLowerCase().includes(q),
+      );
+    }
+    if (filterCategory) {
+      result = result.filter((t) => t.category === filterCategory);
+    }
+    if (filterPriority) {
+      result = result.filter((t) => t.priority === filterPriority);
+    }
+    const priorityOrder: Record<string, number> = {
+      high: 0,
+      medium: 1,
+      low: 2,
+    };
+    return [...result].sort((a, b) => {
+      switch (sortBy) {
+        case "date":
+          return a.dueDate.localeCompare(b.dueDate);
+        case "priority":
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        case "name":
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
+      }
+    });
+  }, [optimisticTasks, search, filterCategory, filterPriority, sortBy]);
+
+  const taskGroups = useMemo(() => {
+    const td = todayISO();
+    return {
+      overdue: processedTasks.filter((t) => !t.done && t.dueDate < td),
+      today: processedTasks.filter((t) => !t.done && t.dueDate === td),
+      upcoming: processedTasks.filter((t) => !t.done && t.dueDate > td),
+      done: processedTasks.filter((t) => t.done),
+    };
+  }, [processedTasks]);
+
+  const activeFilterCount = (filterCategory ? 1 : 0) + (filterPriority ? 1 : 0);
 
   const stats = useMemo(
     () => ({
@@ -272,6 +320,7 @@ export function TaskKuApp({
               "linear-gradient(135deg, #1e40af 0%, #4338ca 50%, #6366f1 100%)",
             color: "white",
             position: "relative",
+            zIndex: notifOpen ? 10 : undefined,
           }}
         >
           {/* Decorative circles — wrapped in their own clipping layer so the
@@ -354,10 +403,9 @@ export function TaskKuApp({
                   </div>
                 </div>
               </div>
-              <div
-                style={{ display: "flex", gap: 10, position: "relative" }}
-              >
+              <div style={{ display: "flex", gap: 10, position: "relative" }}>
                 <button
+                  ref={bellRef}
                   type="button"
                   aria-label="Buka notifikasi"
                   aria-haspopup="dialog"
@@ -443,6 +491,7 @@ export function TaskKuApp({
                   onDismiss={dismissNotification}
                   onClearAll={clearAllNotifications}
                   onSelect={handleNotificationSelect}
+                  triggerRef={bellRef}
                 />
               </div>
             </div>
@@ -545,13 +594,13 @@ export function TaskKuApp({
           style={{
             padding: "0 16px",
             marginTop: -12,
-            paddingBottom: 100,
+            paddingBottom: 90,
             position: "relative",
             zIndex: 2,
           }}
         >
           {screen === "home" && (
-            <div className="space-y-4 animate-fade-in">
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Search — URL as State */}
               <div
                 className="card"
@@ -595,21 +644,110 @@ export function TaskKuApp({
                 )}
               </div>
 
-              {/* Task list */}
-              <div style={{ marginTop: 4 }}>
-                <h3
+              {/* Filter & Sort */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  padding: "2px 2px",
+                  rowGap: 10,
+                }}
+              >
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() =>
+                      setFilterCategory((p) => (p === cat ? null : cat))
+                    }
+                    className="filter-chip"
+                    data-active={filterCategory === cat || undefined}
+                  >
+                    {cat}
+                  </button>
+                ))}
+                <span
                   style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    fontFamily: FONT_HEADING,
-                    color: "var(--foreground-muted)",
-                    marginBottom: 12,
-                    paddingLeft: 4,
+                    width: 1,
+                    height: 14,
+                    background: "var(--card-border)",
+                    flexShrink: 0,
                   }}
+                />
+                {PRIORITIES.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() =>
+                      setFilterPriority((prev) => (prev === p.id ? null : p.id))
+                    }
+                    className="filter-chip"
+                    data-active={filterPriority === p.id || undefined}
+                    style={
+                      filterPriority === p.id
+                        ? {
+                            background: p.bg,
+                            color: p.color,
+                            borderColor: p.color,
+                          }
+                        : {}
+                    }
+                  >
+                    <Flag size={9} /> {p.label}
+                  </button>
+                ))}
+                <span
+                  style={{
+                    width: 1,
+                    height: 14,
+                    background: "var(--card-border)",
+                    flexShrink: 0,
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSortBy((p) =>
+                      p === "date"
+                        ? "priority"
+                        : p === "priority"
+                          ? "name"
+                          : "date",
+                    )
+                  }
+                  className="filter-chip"
+                  data-active={sortBy !== "date" || undefined}
                 >
-                  Daftar Tugas
-                </h3>
-                {filteredTasks.length === 0 ? (
+                  <ArrowUpDown size={9} />{" "}
+                  {sortBy === "date"
+                    ? "Tanggal"
+                    : sortBy === "priority"
+                      ? "Prioritas"
+                      : "Nama"}
+                </button>
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterCategory(null);
+                      setFilterPriority(null);
+                    }}
+                    className="filter-chip"
+                    style={{
+                      color: "#ef4444",
+                      borderColor: "rgba(239,68,68,0.3)",
+                    }}
+                  >
+                    <X size={9} /> Hapus Filter
+                  </button>
+                )}
+              </div>
+
+              {/* Task sections */}
+              <div style={{ marginTop: 2 }}>
+                {processedTasks.length === 0 ? (
                   <div
                     className="card"
                     style={{
@@ -647,7 +785,9 @@ export function TaskKuApp({
                         marginBottom: 4,
                       }}
                     >
-                      {search ? "Tidak ada hasil" : "Belum ada tugas"}
+                      {search || activeFilterCount > 0
+                        ? "Tidak ada hasil"
+                        : "Belum ada tugas"}
                     </p>
                     <p
                       style={{
@@ -658,9 +798,11 @@ export function TaskKuApp({
                     >
                       {search
                         ? `Tidak ada tugas cocok dengan "${search}".`
-                        : "Mulai dengan menambahkan tugas pertamamu."}
+                        : activeFilterCount > 0
+                          ? "Coba ubah filter untuk melihat tugas lainnya."
+                          : "Mulai dengan menambahkan tugas pertamamu."}
                     </p>
-                    {!search && (
+                    {!search && activeFilterCount === 0 && (
                       <button
                         type="button"
                         onClick={() => setOpen(true)}
@@ -678,9 +820,9 @@ export function TaskKuApp({
                           fontWeight: 700,
                           fontFamily: FONT_HEADING,
                           cursor: "pointer",
-                          boxShadow:
-                            "0 4px 12px rgba(37, 99, 235, 0.3)",
-                          transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                          boxShadow: "0 4px 12px rgba(37, 99, 235, 0.3)",
+                          transition:
+                            "transform 0.15s ease, box-shadow 0.15s ease",
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.transform = "translateY(-1px)";
@@ -698,15 +840,102 @@ export function TaskKuApp({
                     )}
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }} className="stagger-children">
-                    {filteredTasks.map((t) => (
-                      <TaskCard
-                        key={t.id}
-                        task={t}
-                        onToggle={toggleTask}
-                        onDetail={setSelectedTask}
-                      />
-                    ))}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 20,
+                    }}
+                  >
+                    {[
+                      {
+                        title: "Overdue",
+                        tasks: taskGroups.overdue,
+                        color: "#ef4444",
+                        bg: "rgba(239,68,68,0.1)",
+                      },
+                      {
+                        title: "Hari Ini",
+                        tasks: taskGroups.today,
+                        color: "#f59e0b",
+                        bg: "rgba(245,158,11,0.1)",
+                      },
+                      {
+                        title: "Mendatang",
+                        tasks: taskGroups.upcoming,
+                        color: "#2563eb",
+                        bg: "rgba(37,99,235,0.1)",
+                      },
+                      {
+                        title: "Selesai",
+                        tasks: taskGroups.done,
+                        color: "#10b981",
+                        bg: "rgba(16,185,129,0.1)",
+                      },
+                    ]
+                      .filter((s) => s.tasks.length > 0)
+                      .map((section) => (
+                        <div key={section.title}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              marginBottom: 10,
+                              paddingLeft: 4,
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                background: section.color,
+                                flexShrink: 0,
+                              }}
+                            />
+                            <h3
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                fontFamily: FONT_HEADING,
+                                color: "var(--foreground-muted)",
+                              }}
+                            >
+                              {section.title}
+                            </h3>
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 700,
+                                color: section.color,
+                                background: section.bg,
+                                padding: "2px 8px",
+                                borderRadius: 999,
+                              }}
+                            >
+                              {section.tasks.length}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 10,
+                            }}
+                            className="stagger-children"
+                          >
+                            {section.tasks.map((t) => (
+                              <TaskCard
+                                key={t.id}
+                                task={t}
+                                onToggle={toggleTask}
+                                onDetail={setSelectedTask}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 )}
               </div>
@@ -762,32 +991,41 @@ export function TaskKuApp({
             left: "50%",
             transform: "translateX(-50%)",
             width: "100%",
-            maxWidth: 420,
+            maxWidth: 480,
             zIndex: 20,
             background: "var(--bottom-nav-bg)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             borderTop: "1px solid var(--bottom-nav-border)",
-            borderLeft: "1px solid var(--bottom-nav-border)",
-            borderRight: "1px solid var(--bottom-nav-border)",
-            borderRadius: "0",
           }}
         >
           <div
             style={{
               display: "flex",
               justifyContent: "space-around",
-              padding: "8px 0 12px",
+              padding: "10px 0",
+              paddingBottom: "max(12px, env(safe-area-inset-bottom, 12px))",
             }}
           >
             {[
-              { id: "home" as Screen, icon: Home, label: "Home" },
+              {
+                id: "home" as Screen,
+                icon: Home,
+                label: "Home",
+                badge: stats.today + stats.overdue,
+              },
               {
                 id: "calendar" as Screen,
                 icon: CalendarIcon,
                 label: "Kalender",
+                badge: stats.overdue,
               },
-              { id: "profile" as Screen, icon: UserIcon, label: "Profil" },
+              {
+                id: "profile" as Screen,
+                icon: UserIcon,
+                label: "Profil",
+                badge: 0,
+              },
             ].map((tab) => {
               const active = screen === tab.id;
               return (
@@ -819,6 +1057,28 @@ export function TaskKuApp({
                       }}
                     />
                   )}
+                  {tab.badge > 0 && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        right: 10,
+                        minWidth: 16,
+                        height: 16,
+                        borderRadius: 999,
+                        background: "#ef4444",
+                        color: "white",
+                        fontSize: 9,
+                        fontWeight: 700,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "0 4px",
+                      }}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
                   <tab.icon
                     size={22}
                     color={active ? "#2563EB" : "var(--foreground-subtle)"}
@@ -846,6 +1106,7 @@ export function TaskKuApp({
         open={open}
         onClose={() => setOpen(false)}
         onTaskCreated={onTaskCreated}
+        userEmail={userEmail}
       />
 
       {/* Task Detail Modal */}

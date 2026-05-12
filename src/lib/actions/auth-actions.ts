@@ -14,6 +14,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createHash } from "crypto";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import type { SessionData } from "@/lib/session";
 
 type StoredAccount = {
   name: string;
@@ -31,6 +33,25 @@ function hashPassword(password: string): string {
 }
 
 async function readAccounts(): Promise<StoredAccount[]> {
+  // Try Supabase first
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data } = await supabase
+        .from("users")
+        .select("name, email, password_hash");
+      if (data && data.length > 0) {
+        return data.map((u) => ({
+          name: u.name as string,
+          email: u.email as string,
+          passwordHash: u.password_hash as string,
+        }));
+      }
+    } catch {
+      // fallback to cookie
+    }
+  }
+
+  // Fallback: read from cookie
   const cookieStore = await cookies();
   const raw = cookieStore.get(ACCOUNTS_COOKIE)?.value;
   if (!raw) return [];
@@ -50,7 +71,24 @@ async function readAccounts(): Promise<StoredAccount[]> {
   }
 }
 
-async function writeAccounts(accounts: StoredAccount[]): Promise<void> {
+async function writeAccount(account: StoredAccount): Promise<void> {
+  // Try Supabase first
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from("users").insert({
+        name: account.name,
+        email: account.email,
+        password_hash: account.passwordHash,
+      });
+      return;
+    } catch {
+      // fallback to cookie
+    }
+  }
+
+  // Fallback: write to cookie
+  const accounts = await readAccounts();
+  accounts.push(account);
   const cookieStore = await cookies();
   cookieStore.set(ACCOUNTS_COOKIE, JSON.stringify(accounts), {
     httpOnly: true,
@@ -61,9 +99,9 @@ async function writeAccounts(accounts: StoredAccount[]): Promise<void> {
   });
 }
 
-async function setSession(name: string): Promise<void> {
+async function setSession(session: SessionData): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, name, {
+  cookieStore.set(SESSION_COOKIE, JSON.stringify(session), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -88,9 +126,11 @@ export async function registerAction(
   formData: FormData,
 ): Promise<{ error?: string } | undefined> {
   const name = (formData.get("name") as string | null)?.trim() ?? "";
-  const email = (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
+  const email =
+    (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
   const password = (formData.get("password") as string | null) ?? "";
-  const confirmPassword = (formData.get("confirmPassword") as string | null) ?? "";
+  const confirmPassword =
+    (formData.get("confirmPassword") as string | null) ?? "";
 
   if (name.length < 2) {
     return { error: "Nama minimal 2 karakter" };
@@ -110,13 +150,12 @@ export async function registerAction(
     return { error: "Email sudah terdaftar. Silakan login." };
   }
 
-  accounts.push({
+  await writeAccount({
     name,
     email,
     passwordHash: hashPassword(password),
   });
-  await writeAccounts(accounts);
-  await setSession(name);
+  await setSession({ name, email });
 
   redirect("/dashboard");
 }
@@ -131,7 +170,8 @@ export async function loginAction(
   _prevState: { error?: string } | undefined,
   formData: FormData,
 ): Promise<{ error?: string } | undefined> {
-  const email = (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
+  const email =
+    (formData.get("email") as string | null)?.trim().toLowerCase() ?? "";
   const password = (formData.get("password") as string | null) ?? "";
 
   if (!email) {
@@ -151,7 +191,7 @@ export async function loginAction(
     return { error: "Password salah" };
   }
 
-  await setSession(account.name);
+  await setSession({ name: account.name, email: account.email });
   redirect("/dashboard");
 }
 

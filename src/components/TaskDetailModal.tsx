@@ -160,13 +160,19 @@ export function TaskDetailModal({
             <div className="info-label">
               <CalendarIcon
                 size={10}
-                style={{ display: "inline", marginRight: 4, verticalAlign: "middle" }}
+                style={{
+                  display: "inline",
+                  marginRight: 4,
+                  verticalAlign: "middle",
+                }}
               />
               Deadline
             </div>
             <div
               className="info-value"
-              style={{ color: overdue && !task.done ? "#DC2626" : "var(--foreground)" }}
+              style={{
+                color: overdue && !task.done ? "#DC2626" : "var(--foreground)",
+              }}
             >
               {formatDate(task.dueDate)}
               {overdue && !task.done && (
@@ -180,7 +186,11 @@ export function TaskDetailModal({
             <div className="info-label">
               <Flag
                 size={10}
-                style={{ display: "inline", marginRight: 4, verticalAlign: "middle" }}
+                style={{
+                  display: "inline",
+                  marginRight: 4,
+                  verticalAlign: "middle",
+                }}
               />
               Prioritas
             </div>
@@ -192,7 +202,11 @@ export function TaskDetailModal({
             <div className="info-label">
               <Tag
                 size={10}
-                style={{ display: "inline", marginRight: 4, verticalAlign: "middle" }}
+                style={{
+                  display: "inline",
+                  marginRight: 4,
+                  verticalAlign: "middle",
+                }}
               />
               Kategori
             </div>
@@ -202,7 +216,11 @@ export function TaskDetailModal({
             <div className="info-label">
               <Clock
                 size={10}
-                style={{ display: "inline", marginRight: 4, verticalAlign: "middle" }}
+                style={{
+                  display: "inline",
+                  marginRight: 4,
+                  verticalAlign: "middle",
+                }}
               />
               Dibuat
             </div>
@@ -262,7 +280,7 @@ export function TaskDetailModal({
               onDelete(task);
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#fef2f2";
+              e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";

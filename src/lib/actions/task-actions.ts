@@ -38,7 +38,7 @@ import { TaskFormSchema, type TaskFieldErrors } from "@/lib/schemas";
  * Jika Supabase belum dikonfigurasi, return array kosong
  * (client akan fallback ke localStorage).
  */
-export async function getTasks(): Promise<Task[]> {
+export async function getTasks(userEmail?: string): Promise<Task[]> {
   console.log(
     "[Server Action] getTasks called. Supabase configured:",
     isSupabaseConfigured,
@@ -54,10 +54,16 @@ export async function getTasks(): Promise<Task[]> {
   }
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from("tasks")
       .select("*")
       .order("duedate", { ascending: true });
+
+    if (userEmail) {
+      query = query.eq("user_email", userEmail);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("[Server Action] getTasks error:", error.message);
@@ -92,6 +98,7 @@ export async function getTasks(): Promise<Task[]> {
  */
 export async function createTaskAction(
   task: Task,
+  userEmail?: string,
 ): Promise<{
   success: boolean;
   task?: Task;
@@ -128,9 +135,13 @@ export async function createTaskAction(
   }
 
   try {
+    const dbRecord = taskToDb(task);
+    if (userEmail) {
+      (dbRecord as Record<string, unknown>).user_email = userEmail;
+    }
     const { data, error } = await supabase
       .from("tasks")
-      .insert([taskToDb(task)])
+      .insert([dbRecord])
       .select()
       .single();
 
@@ -211,9 +222,7 @@ export async function toggleTaskAction(
  *
  * @returns Task yang sudah diupdate, atau error
  */
-export async function updateTaskAction(
-  task: Task,
-): Promise<{
+export async function updateTaskAction(task: Task): Promise<{
   success: boolean;
   task?: Task;
   error?: string;
@@ -306,4 +315,3 @@ export async function deleteTaskAction(
     return { success: false, error: String(err) };
   }
 }
-

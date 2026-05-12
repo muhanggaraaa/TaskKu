@@ -14,6 +14,7 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTasks } from "@/lib/actions/task-actions";
+import { parseSession } from "@/lib/session";
 import { TaskKuApp } from "@/components/TaskKuApp";
 import DashboardLoading from "./loading";
 
@@ -27,14 +28,18 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const user = session.value;
+  const { name: user, email: userEmail } = parseSession(session.value);
 
   // Server-side data fetching via Server Action
-  const initialTasks = await getTasks();
+  const initialTasks = await getTasks(userEmail);
 
   return (
     <Suspense fallback={<DashboardLoading />}>
-      <TaskKuApp initialTasks={initialTasks} user={user} />
+      <TaskKuApp
+        initialTasks={initialTasks}
+        user={user}
+        userEmail={userEmail}
+      />
     </Suspense>
   );
 }

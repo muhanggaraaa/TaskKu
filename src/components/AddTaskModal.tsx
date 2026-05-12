@@ -12,10 +12,12 @@ export function AddTaskModal({
   open,
   onClose,
   onTaskCreated,
+  userEmail,
 }: {
   open: boolean;
   onClose: () => void;
   onTaskCreated: (task: Task) => void;
+  userEmail?: string;
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -49,7 +51,7 @@ export function AddTaskModal({
         done: false,
         createdAt: new Date().toISOString(),
       };
-      const result = await createTaskAction(record);
+      const result = await createTaskAction(record, userEmail);
       // Jika validasi gagal, tampilkan error per field
       if (result.fieldErrors) {
         setFieldErrors(result.fieldErrors);
@@ -166,7 +168,13 @@ export function AddTaskModal({
             <X size={16} />
           </button>
         </div>
-        <p style={{ fontSize: 11, color: "var(--foreground-subtle)", marginBottom: 20 }}>
+        <p
+          style={{
+            fontSize: 11,
+            color: "var(--foreground-subtle)",
+            marginBottom: 20,
+          }}
+        >
           Disimpan via{" "}
           <span
             style={{
@@ -429,8 +437,7 @@ export function AddTaskModal({
                       priority === p.id
                         ? "none"
                         : "2px solid var(--card-border)",
-                    background:
-                      priority === p.id ? p.bg : "var(--card-bg)",
+                    background: priority === p.id ? p.bg : "var(--card-bg)",
                     color:
                       priority === p.id ? p.color : "var(--foreground-muted)",
                     fontSize: 11,

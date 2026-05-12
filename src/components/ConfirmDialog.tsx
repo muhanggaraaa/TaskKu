@@ -53,7 +53,7 @@ export function ConfirmDialog({
             width: 48,
             height: 48,
             borderRadius: 14,
-            background: "#FEF2F2",
+            background: "rgba(239, 68, 68, 0.1)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

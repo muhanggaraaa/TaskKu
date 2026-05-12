@@ -14,13 +14,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  AlarmClock,
-  AlertTriangle,
-  Bell,
-  CheckCircle2,
-  X,
-} from "lucide-react";
+import { AlarmClock, AlertTriangle, Bell, CheckCircle2, X } from "lucide-react";
 import type { Task } from "@/lib/types";
 import { FONT, FONT_HEADING } from "@/lib/types";
 import { formatDate, todayISO } from "@/lib/utils";
@@ -180,6 +174,7 @@ export function NotificationPanel({
   onDismiss,
   onClearAll,
   onSelect,
+  triggerRef,
 }: {
   notifications: AppNotification[];
   open: boolean;
@@ -187,13 +182,19 @@ export function NotificationPanel({
   onDismiss: (id: string) => void;
   onClearAll: () => void;
   onSelect: (taskId: string) => void;
+  triggerRef?: React.RefObject<HTMLElement | null>;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        panelRef.current &&
+        !panelRef.current.contains(target) &&
+        (!triggerRef?.current || !triggerRef.current.contains(target))
+      ) {
         onClose();
       }
     };
@@ -226,8 +227,7 @@ export function NotificationPanel({
         color: "var(--foreground)",
         border: "1px solid var(--card-border)",
         borderRadius: 18,
-        boxShadow:
-          "0 16px 40px rgba(0,0,0,0.22), 0 6px 14px rgba(0,0,0,0.12)",
+        boxShadow: "0 16px 40px rgba(0,0,0,0.22), 0 6px 14px rgba(0,0,0,0.12)",
         zIndex: 50,
         overflow: "hidden",
         display: "flex",
@@ -497,8 +497,7 @@ export function NotificationPanel({
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = "transparent";
-                      e.currentTarget.style.color =
-                        "var(--foreground-subtle)";
+                      e.currentTarget.style.color = "var(--foreground-subtle)";
                     }}
                   >
                     <X size={14} />
