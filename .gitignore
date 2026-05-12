@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# tugas & materi (tidak perlu di-push)
+/Tugas9/
+
+# AI agent config files
+AGENTS.md
+CLAUDE.md
+.gemini/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db

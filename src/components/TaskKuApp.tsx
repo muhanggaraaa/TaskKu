@@ -439,7 +439,7 @@ export function TaskKuApp({
           }}
         >
           {screen === "home" && (
-            <div className="space-y-3 animate-fade-in">
+            <div className="space-y-4 animate-fade-in">
               {/* Search — URL as State */}
               <div
                 className="card"
@@ -487,7 +487,7 @@ export function TaskKuApp({
                     fontWeight: 700,
                     fontFamily: FONT_HEADING,
                     color: "#475569",
-                    marginBottom: 10,
+                    marginBottom: 12,
                     paddingLeft: 4,
                   }}
                 >
@@ -512,7 +512,7 @@ export function TaskKuApp({
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2.5 stagger-children">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }} className="stagger-children">
                     {filteredTasks.map((t) => (
                       <TaskCard
                         key={t.id}
