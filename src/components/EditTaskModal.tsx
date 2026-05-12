@@ -168,8 +168,8 @@ export function EditTaskModal({
           Perubahan disimpan via{" "}
           <span
             style={{
-              color: "#3b82f6",
-              background: "#eff6ff",
+              color: "var(--notif-pill-text)",
+              background: "var(--notif-pill)",
               padding: "1px 6px",
               borderRadius: 4,
               fontWeight: 600,
@@ -374,8 +374,8 @@ export function EditTaskModal({
                     borderRadius: 12,
                     cursor: "pointer",
                     border:
-                      priority === pr.id ? "none" : "2px solid #e2e8f0",
-                    background: priority === pr.id ? pr.bg : "white",
+                      priority === pr.id ? "none" : "2px solid var(--card-border)",
+                    background: priority === pr.id ? pr.bg : "var(--card-bg)",
                     color: priority === pr.id ? pr.color : "var(--foreground-muted)",
                     fontSize: 11,
                     fontWeight: 700,

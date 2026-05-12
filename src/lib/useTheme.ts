@@ -31,13 +31,18 @@ function applyTheme(theme: Theme) {
 }
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(() =>
-    typeof document === "undefined" ? "light" : readInitialTheme(),
-  );
+  // Always start with "light" on SSR; sync from DOM after mount to avoid
+  // hydration mismatches and keep the toggle icon consistent with the
+  // theme already applied by the inline <script> in <head>.
+  const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Read the actual theme from the DOM after hydration (the inline script
+    // in <head> already applied it before paint). Setting state here is the
+    // intended one-shot sync from an external system to React state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    setThemeState(readInitialTheme());
     setMounted(true);
   }, []);
 
