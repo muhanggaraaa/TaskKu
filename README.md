@@ -253,11 +253,15 @@ Profil pengguna dengan progress bar dan statistik.
 
 ---
 
-## 👤 Author
+## 👥 Tim Pengembang
 
-**M. Anggara Ramadhan**
+| Nama | GitHub |
+|------|--------|
+| **Hamzah Permata Putra** | [@nacht24](https://github.com/nacht24) |
+| **Muhamad Anggara Ramadhan** | [@muhanggaraaa](https://github.com/muhanggaraaa) |
+| **Murfid Muhyiddin** | [@Murfid-m](https://github.com/Murfid-m) |
 
-Next.js Masterclass — *"From Code to Product"* · 2026
+Informatika — Sultan Ageng Tirtayasa · 2026
 
 ---
 
