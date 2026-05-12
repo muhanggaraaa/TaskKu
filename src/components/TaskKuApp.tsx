@@ -480,7 +480,7 @@ export function TaskKuApp({
               </div>
 
               {/* Task list */}
-              <div>
+              <div style={{ marginTop: 4 }}>
                 <h3
                   style={{
                     fontSize: 13,
@@ -555,7 +555,7 @@ export function TaskKuApp({
             alignItems: "center",
             justifyContent: "center",
             transition: "all 0.2s ease",
-            left: "min(calc(50% + 145px), calc(100vw - 70px))",
+            right: "max(calc(50% - 180px), 16px)",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "scale(1.08)";
