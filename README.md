@@ -261,7 +261,7 @@ Profil pengguna dengan progress bar dan statistik.
 | **Muhamad Anggara Ramadhan** | [@muhanggaraaa](https://github.com/muhanggaraaa) |
 | **Murfid Muhyiddin** | [@Murfid-m](https://github.com/Murfid-m) |
 
-Informatika — Sultan Ageng Tirtayasa · 2026
+kELOMPOK 5 BEGINNER
 
 ---
 
