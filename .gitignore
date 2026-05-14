@@ -1,7 +1,5 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
+# Dependencies (install with npm ci in CI/production)
+/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -10,47 +8,54 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# Next.js build output and caches
 /.next/
 /out/
+/build/
+.turbo/
 
-# production
-/build
+# Test/coverage output
+/coverage/
 
-# misc
-.DS_Store
-*.pem
+# Environment and deployment-local files
+.env
+.env.*
+!.env.example
+.vercel/
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
+# TypeScript / generated files
 *.tsbuildinfo
 next-env.d.ts
 
-# tugas & materi (tidak perlu di-push)
-/Tugas9/
+# Logs and debug artifacts
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
 
-# AI agent config files
+# Coursework/source-material folders that are not needed by production deploy
+/Tugas*/
+
+# Large local evidence/source-material files (keep production assets under /public if needed)
+**/Cuplikan layar*
+**/*.pdf
+
+# AI agent config files (local assistant context only)
 AGENTS.md
 CLAUDE.md
 .gemini/
+.codex/
+.devin/
 
 # IDE / editor
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# OS / misc
+.DS_Store
 Thumbs.db
+*.pem

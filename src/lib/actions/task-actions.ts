@@ -20,6 +20,7 @@
 
 "use server";
 
+import { cookies } from "next/headers";
 import {
   supabase,
   isSupabaseConfigured,
@@ -28,6 +29,18 @@ import {
 } from "@/lib/supabase";
 import type { Task } from "@/lib/types";
 import { TaskFormSchema, type TaskFieldErrors } from "@/lib/schemas";
+import { parseSession } from "@/lib/session";
+
+const SESSION_COOKIE = "session";
+
+async function getSessionEmail(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(SESSION_COOKIE)?.value;
+  if (!sessionCookie) return null;
+
+  const session = parseSession(sessionCookie);
+  return session.email || null;
+}
 
 // ==================== READ ====================
 
@@ -38,46 +51,27 @@ import { TaskFormSchema, type TaskFieldErrors } from "@/lib/schemas";
  * Jika Supabase belum dikonfigurasi, return array kosong
  * (client akan fallback ke localStorage).
  */
-export async function getTasks(userEmail?: string): Promise<Task[]> {
-  console.log(
-    "[Server Action] getTasks called. Supabase configured:",
-    isSupabaseConfigured,
-    "URL:",
-    process.env.NEXT_PUBLIC_SUPABASE_URL ? "SET" : "EMPTY",
-  );
-
+export async function getTasks(): Promise<Task[]> {
   if (!isSupabaseConfigured || !supabase) {
-    console.log(
-      "[Server Action] Supabase not configured, returning empty array",
-    );
     return [];
   }
 
+  const sessionEmail = await getSessionEmail();
+  if (!sessionEmail) return [];
+
   try {
-    let query = supabase
+    const { data, error } = await supabase
       .from("tasks")
       .select("*")
+      .eq("user_email", sessionEmail)
       .order("duedate", { ascending: true });
 
-    if (userEmail) {
-      query = query.eq("user_email", userEmail);
-    }
-
-    const { data, error } = await query;
-
     if (error) {
-      console.error("[Server Action] getTasks error:", error.message);
       return [];
     }
 
-    console.log(
-      "[Server Action] getTasks success, found",
-      data?.length || 0,
-      "tasks",
-    );
     return data ? data.map(dbToTask) : [];
-  } catch (err) {
-    console.error("[Server Action] getTasks exception:", err);
+  } catch {
     return [];
   }
 }
@@ -98,7 +92,6 @@ export async function getTasks(userEmail?: string): Promise<Task[]> {
  */
 export async function createTaskAction(
   task: Task,
-  userEmail?: string,
 ): Promise<{
   success: boolean;
   task?: Task;
@@ -118,7 +111,6 @@ export async function createTaskAction(
   if (!validation.success) {
     const fieldErrors = validation.error.flatten()
       .fieldErrors as TaskFieldErrors;
-    console.log("[Server Action] Validation failed:", fieldErrors);
     return {
       success: false,
       error: "Validasi gagal",
@@ -127,18 +119,34 @@ export async function createTaskAction(
     };
   }
 
+  const taskData = validation.data;
+  const validatedTask: Task = {
+    ...task,
+    title: taskData.title,
+    description: taskData.description,
+    dueDate: taskData.dueDate,
+    priority: taskData.priority,
+    category: taskData.category,
+  };
+
   if (!isSupabaseConfigured || !supabase) {
-    console.log(
-      "[Server Action] Supabase NOT configured, falling back to localStorage",
-    );
     return { success: false, error: "Supabase not configured", source: "none" };
   }
 
+  const sessionEmail = await getSessionEmail();
+  if (!sessionEmail) {
+    return {
+      success: false,
+      error: "Session tidak valid. Silakan login ulang.",
+      source: "auth",
+    };
+  }
+
   try {
-    const dbRecord = taskToDb(task);
-    if (userEmail) {
-      (dbRecord as Record<string, unknown>).user_email = userEmail;
-    }
+    const dbRecord = {
+      ...taskToDb(validatedTask),
+      user_email: sessionEmail,
+    };
     const { data, error } = await supabase
       .from("tasks")
       .insert([dbRecord])
@@ -146,14 +154,11 @@ export async function createTaskAction(
       .single();
 
     if (error) {
-      console.error("[Server Action] createTask error:", error.message);
       return { success: false, error: error.message, source: "supabase_error" };
     }
 
-    console.log("[Server Action] Task saved to Supabase!", data.id);
     return { success: true, task: dbToTask(data), source: "supabase" };
   } catch (err) {
-    console.error("[Server Action] createTask exception:", err);
     return { success: false, error: String(err), source: "exception" };
   }
 }
@@ -173,21 +178,35 @@ export async function createTaskAction(
  */
 export async function toggleTaskAction(
   id: string,
-): Promise<{ success: boolean; task?: Task; error?: string }> {
+): Promise<{ success: boolean; task?: Task; error?: string; source?: string }> {
   if (!isSupabaseConfigured || !supabase) {
-    return { success: true }; // Client handles localStorage
+    return { success: true, source: "none" }; // Client handles localStorage
+  }
+
+  const sessionEmail = await getSessionEmail();
+  if (!sessionEmail) {
+    return {
+      success: false,
+      error: "Session tidak valid. Silakan login ulang.",
+      source: "auth",
+    };
   }
 
   try {
-    // Get current task
+    // Get current task scoped to the logged-in user
     const { data: current, error: fetchError } = await supabase
       .from("tasks")
       .select("done")
       .eq("id", id)
+      .eq("user_email", sessionEmail)
       .single();
 
     if (fetchError || !current) {
-      return { success: false, error: fetchError?.message || "Task not found" };
+      return {
+        success: false,
+        error: fetchError?.message || "Task not found",
+        source: "supabase_error",
+      };
     }
 
     // Toggle status
@@ -195,17 +214,17 @@ export async function toggleTaskAction(
       .from("tasks")
       .update({ done: !current.done })
       .eq("id", id)
+      .eq("user_email", sessionEmail)
       .select()
       .single();
 
     if (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, source: "supabase_error" };
     }
 
-    return { success: true, task: dbToTask(data) };
+    return { success: true, task: dbToTask(data), source: "supabase" };
   } catch (err) {
-    console.error("[Server Action] toggleTask exception:", err);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), source: "exception" };
   }
 }
 
@@ -241,7 +260,6 @@ export async function updateTaskAction(task: Task): Promise<{
   if (!validation.success) {
     const fieldErrors = validation.error.flatten()
       .fieldErrors as TaskFieldErrors;
-    console.log("[Server Action] Update validation failed:", fieldErrors);
     return {
       success: false,
       error: "Validasi gagal",
@@ -250,37 +268,43 @@ export async function updateTaskAction(task: Task): Promise<{
     };
   }
 
+  const taskData = validation.data;
+
   if (!isSupabaseConfigured || !supabase) {
-    console.log(
-      "[Server Action] Supabase NOT configured, falling back to localStorage",
-    );
     return { success: false, error: "Supabase not configured", source: "none" };
+  }
+
+  const sessionEmail = await getSessionEmail();
+  if (!sessionEmail) {
+    return {
+      success: false,
+      error: "Session tidak valid. Silakan login ulang.",
+      source: "auth",
+    };
   }
 
   try {
     const { data, error } = await supabase
       .from("tasks")
       .update({
-        title: task.title,
-        description: task.description,
-        duedate: task.dueDate,
-        priority: task.priority,
-        category: task.category,
+        title: taskData.title,
+        description: taskData.description,
+        duedate: taskData.dueDate,
+        priority: taskData.priority,
+        category: taskData.category,
         done: task.done,
       })
       .eq("id", task.id)
+      .eq("user_email", sessionEmail)
       .select()
       .single();
 
     if (error) {
-      console.error("[Server Action] updateTask error:", error.message);
       return { success: false, error: error.message, source: "supabase_error" };
     }
 
-    console.log("[Server Action] Task updated in Supabase!", data.id);
     return { success: true, task: dbToTask(data), source: "supabase" };
   } catch (err) {
-    console.error("[Server Action] updateTask exception:", err);
     return { success: false, error: String(err), source: "exception" };
   }
 }
@@ -297,21 +321,33 @@ export async function updateTaskAction(task: Task): Promise<{
  */
 export async function deleteTaskAction(
   id: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; source?: string }> {
   if (!isSupabaseConfigured || !supabase) {
-    return { success: true }; // Client handles localStorage
+    return { success: true, source: "none" }; // Client handles localStorage
+  }
+
+  const sessionEmail = await getSessionEmail();
+  if (!sessionEmail) {
+    return {
+      success: false,
+      error: "Session tidak valid. Silakan login ulang.",
+      source: "auth",
+    };
   }
 
   try {
-    const { error } = await supabase.from("tasks").delete().eq("id", id);
+    const { error } = await supabase
+      .from("tasks")
+      .delete()
+      .eq("id", id)
+      .eq("user_email", sessionEmail);
 
     if (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, source: "supabase_error" };
     }
 
-    return { success: true };
+    return { success: true, source: "supabase" };
   } catch (err) {
-    console.error("[Server Action] deleteTask exception:", err);
-    return { success: false, error: String(err) };
+    return { success: false, error: String(err), source: "exception" };
   }
 }

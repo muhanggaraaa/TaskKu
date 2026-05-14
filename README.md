@@ -1,4 +1,6 @@
-# ✅ TaskKu — Atur Tugasmu, Raih Nilaimu
+# TaskKu
+
+TaskKu is a mobile-first task management web app built with Next.js App Router. It helps users organize assignments, deadlines, priorities, and daily progress with a fast app-like experience.
 
 <div align="center">
 
@@ -9,118 +11,143 @@
 ![Zod](https://img.shields.io/badge/Zod-4-3E67B1?logo=zod&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 
-**Aplikasi manajemen tugas mobile-first berbasis Next.js App Router**
-
 </div>
 
 ---
 
-## 📖 Tentang
+## Overview
 
-TaskKu adalah aplikasi manajemen tugas interaktif yang dibangun sebagai project kuliah **Next.js Masterclass — "From Code to Product"**. Aplikasi ini mendemonstrasikan implementasi fitur-fitur produksi nyata:
+TaskKu focuses on a simple flow: sign in, add tasks, track deadlines, and finish work faster. The UI is optimized for mobile screens while still looking polished on desktop.
 
-- 🔒 **Proteksi rute** dengan Proxy (Middleware)
-- 🛡️ **Validasi data** dengan Zod schema
-- 🔗 **URL as State** untuk pencarian persisten
-- ⚡ **Optimistic UI** untuk pengalaman instan
-- 💀 **Skeleton Loading** saat transisi rute
-- ☁️ **Supabase** sebagai backend database
+Core product goals:
 
----
-
-## 🚀 Fitur Utama
-
-### 🔐 Keamanan (Proxy)
-- Rute `/dashboard` dilindungi — tidak bisa diakses tanpa login
-- Session berbasis **HttpOnly cookie** (aman dari XSS)
-- Auto-redirect: `/` → `/dashboard` (jika login) atau `/login` (jika belum)
-
-### 🛡️ Validasi Data (Zod)
-- Schema validasi di **Server Action** dengan `.safeParse()`
-- Error ditampilkan **per-field** langsung di bawah input yang bermasalah
-- Validasi: judul wajib, max 120 karakter, deskripsi max 500, format tanggal, priority enum
-
-### 🔍 Pencarian via URL
-- Search bar menggunakan `useSearchParams` + `usePathname`
-- URL berubah real-time saat mengetik (`/dashboard?search=xxx`)
-- Hasil pencarian **tetap ada** setelah refresh halaman
-- Client-side navigation tanpa reload penuh
-
-### ⚡ Optimistic UI & Loading
-- **`useOptimistic`** — toggle & hapus tugas terasa instan
-- **`loading.tsx`** — Skeleton UI otomatis saat berpindah rute
-- **`startTransition`** — integrasi proper dengan React 19 concurrent features
-- Toast notification untuk feedback aksi
-
-### 📱 Mobile-First Design
-- UI mirip aplikasi native dengan bottom navigation
-- Glassmorphism header + gradient design
-- Animasi staggered untuk list items
-- Floating Action Button (FAB)
-- Responsive — tampil optimal di mobile dan desktop
+- Keep task management quick and clear.
+- Make deadlines visible through dashboard stats, notifications, and calendar view.
+- Give instant feedback with optimistic UI.
+- Stay usable with or without Supabase by falling back to browser storage.
+- Keep production routes protected and recoverable.
 
 ---
 
-## 🏗️ Tech Stack
+## Features
 
-| Teknologi | Versi | Kegunaan |
-|-----------|-------|----------|
-| **Next.js** | 16.2.4 | Framework React (App Router) |
-| **React** | 19.2.4 | UI Library |
-| **TypeScript** | 5.x | Type safety |
-| **Supabase** | 2.x | Backend database (PostgreSQL) |
-| **Zod** | 4.x | Schema validation |
-| **Tailwind CSS** | 4.x | Utility-first CSS |
-| **Sonner** | 2.x | Toast notifications |
-| **Lucide React** | 1.x | Icon library |
-| **date-fns** | 4.x | Date utilities |
+### Authentication and Route Protection
+
+- Register and login screens with server-side validation.
+- Session stored in an HttpOnly cookie.
+- `/dashboard` is protected by Next.js 16 `proxy.ts`.
+- `/` redirects users based on session state.
+
+### Task Management
+
+- Create, edit, view detail, complete, and delete tasks.
+- Priority levels: low, medium, high.
+- Categories for task grouping.
+- Due date tracking with overdue indicators.
+- Confirmation dialog before destructive delete actions.
+
+### Dashboard Experience
+
+- Summary cards for total tasks, completed tasks, and overdue tasks.
+- URL-based search using `useSearchParams`.
+- Category and priority filters.
+- Sort by date, priority, or title.
+- Empty states for first-time users and filtered search results.
+
+### Calendar and Notifications
+
+- Calendar screen with task count per day.
+- Day-based task listing.
+- Notification panel for active deadline reminders.
+- Badge indicators for urgent/today tasks.
+
+### Performance and UX
+
+- Optimistic UI for toggle and delete actions.
+- Route skeleton loading via `src/app/dashboard/loading.tsx`.
+- Toast feedback for success and error states.
+- Local fallback storage separated per user.
+- Responsive layout for 320px+ screens.
+- Light/dark theme toggle.
+
+### Reliability
+
+- Zod validation for task forms.
+- Custom 404 page for unknown routes.
+- Custom error recovery screen for runtime failures.
+- CI workflow for lint and production build checks.
 
 ---
 
-## 📂 Struktur Project
+## Tech Stack
 
-```
+| Technology | Version | Usage |
+|------------|---------|-------|
+| Next.js | 16.2.4 | App Router, Server Components, Server Actions, Proxy |
+| React | 19.2.4 | Client UI and optimistic interactions |
+| TypeScript | 5.x | Type safety |
+| Supabase | 2.x | PostgreSQL backend |
+| Zod | 4.x | Server-side validation |
+| Tailwind CSS | 4.x | Global styling pipeline |
+| Sonner | 2.x | Toast notifications |
+| Lucide React | 1.x | Icons |
+| date-fns | 4.x | Date utilities |
+
+---
+
+## Project Structure
+
+```txt
 src/
-├── app/                          # Next.js App Router
+├── app/
 │   ├── dashboard/
-│   │   ├── page.tsx              # Dashboard page (Server Component)
-│   │   └── loading.tsx           # Skeleton UI (auto Suspense)
+│   │   ├── loading.tsx
+│   │   └── page.tsx
 │   ├── login/
-│   │   ├── page.tsx              # Login page (Server Component)
-│   │   └── LoginForm.tsx         # Login form (Client Component)
-│   ├── layout.tsx                # Root layout + metadata + Toaster
-│   ├── page.tsx                  # Root redirect (handled by proxy)
-│   └── globals.css               # Design system + animations
-│
-├── components/                   # Shared UI Components
-│   ├── TaskKuApp.tsx             # Main app shell (Client Component)
-│   ├── TaskCard.tsx              # Task item card
-│   ├── AddTaskModal.tsx          # Bottom sheet form + Zod validation
-│   ├── CalendarScreen.tsx        # Calendar view
-│   └── ProfileScreen.tsx         # User profile + stats
-│
-├── lib/                          # Shared utilities & logic
+│   │   ├── LoginForm.tsx
+│   │   └── page.tsx
+│   ├── register/
+│   │   ├── RegisterForm.tsx
+│   │   └── page.tsx
+│   ├── error.tsx
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── not-found.tsx
+│   └── page.tsx
+├── components/
+│   ├── AddTaskModal.tsx
+│   ├── CalendarScreen.tsx
+│   ├── ConfirmDialog.tsx
+│   ├── EditTaskModal.tsx
+│   ├── NotificationPanel.tsx
+│   ├── ProfileScreen.tsx
+│   ├── TaskCard.tsx
+│   ├── TaskDetailModal.tsx
+│   └── TaskKuApp.tsx
+├── lib/
 │   ├── actions/
-│   │   ├── auth-actions.ts       # Server Actions: login, logout
-│   │   └── task-actions.ts       # Server Actions: CRUD tasks
-│   ├── schemas.ts                # Zod validation schemas
-│   ├── supabase.ts               # Supabase client + transformers
-│   ├── types.ts                  # TypeScript types & constants
-│   └── utils.ts                  # Helper functions
-│
-└── proxy.ts                      # Route protection (auth check)
+│   │   ├── auth-actions.ts
+│   │   └── task-actions.ts
+│   ├── schemas.ts
+│   ├── session.ts
+│   ├── supabase.ts
+│   ├── types.ts
+│   ├── useTheme.ts
+│   └── utils.ts
+└── proxy.ts
 ```
 
 ---
 
-## ⚙️ Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- **Node.js** 18.17+ 
-- **npm** atau **pnpm**
+- Node.js 20 recommended
+- npm
+- Supabase project, optional but recommended
 
-### 1. Clone & Install
+### Install
 
 ```bash
 git clone https://github.com/muhanggaraaa/TaskKu.git
@@ -128,51 +155,77 @@ cd TaskKu
 npm install
 ```
 
-### 2. Setup Environment
+### Environment Variables
 
-Buat file `.env.local` di root project:
+Create `.env.local` in the project root:
 
 ```env
-# Supabase Configuration
-# Dapatkan dari: https://app.supabase.com/project/_/settings/api
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-> **💡 Tanpa Supabase?** Aplikasi tetap berjalan — data disimpan di `localStorage` browser.
+If these variables are not set, the app still works with local browser storage.
 
-### 3. Setup Database (Supabase)
+### Database Setup
 
-Jalankan SQL berikut di Supabase SQL Editor:
+Run the SQL from [`supabase-migration.sql`](./supabase-migration.sql) in Supabase SQL Editor.
 
 ```sql
-CREATE TABLE tasks (
+-- =============================================
+-- TaskKu Production Schema
+-- =============================================
+-- Run this in Supabase Dashboard > SQL Editor.
+-- Safe to run multiple times because it uses IF NOT EXISTS checks.
+
+-- Users table for TaskKu custom cookie auth.
+CREATE TABLE IF NOT EXISTS users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Tasks table. Dates are stored as YYYY-MM-DD text because the UI uses
+-- native date input values directly.
+CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
   duedate TEXT NOT NULL,
   priority TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
   category TEXT NOT NULL,
-  done BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  done BOOLEAN DEFAULT false,
+  user_email TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Enable Row Level Security (opsional)
-ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+-- Add columns for older databases that already had a tasks table.
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS done BOOLEAN DEFAULT false;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_email TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
 
--- Policy: allow all operations (untuk development)
-CREATE POLICY "Allow all" ON tasks FOR ALL USING (true);
+-- Indexes for login lookup and per-user task queries.
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_tasks_user_email ON tasks(user_email);
+CREATE INDEX IF NOT EXISTS idx_tasks_duedate ON tasks(duedate);
+
+-- Important:
+-- This app currently uses custom cookie auth through Next.js Server Actions,
+-- not Supabase Auth JWT. Keep RLS disabled unless you also add policies that
+-- match your auth strategy or move to Supabase Auth/service-role server access.
 ```
 
-### 4. Run Development Server
+### Development
 
 ```bash
 npm run dev
 ```
 
-Buka [http://localhost:3000](http://localhost:3000) — akan redirect ke halaman login.
+Open `http://localhost:3000`.
 
-### 5. Build Production
+### Production Build
 
 ```bash
 npm run build
@@ -181,95 +234,64 @@ npm start
 
 ---
 
-## 📋 Tugas Minggu 9 — Checklist
+## Scripts
 
-> **Tema:** *The Professional Upgrade: Refinement & Fortification*
-
-### Task 1: Keamanan (Proxy / Middleware) ✅
-- [x] File `proxy.ts` di root `src/`
-- [x] Cek session cookie dengan `NextResponse`
-- [x] `config.matcher` untuk `/dashboard/:path*`
-- [x] Redirect ke `/login` jika tidak ada cookie
-
-### Task 2: Integritas Data (Zod Validation) ✅
-- [x] Library Zod terinstall (`zod@^4.4.3`)
-- [x] Schema validasi di Server Action (`TaskFormSchema`)
-- [x] Metode `.safeParse()` untuk memvalidasi input
-- [x] Field errors ditampilkan di bawah input yang relevan
-
-### Task 3: URL Sebagai State ✅
-- [x] Search Bar di halaman daftar tugas
-- [x] Hook `useSearchParams` & `usePathname`
-- [x] `router.replace()` tanpa reload halaman
-- [x] Filter data Supabase dari parameter URL
-
-### Task 4: Kecepatan UX (Optimistic UI & Loading) ✅
-- [x] `loading.tsx` di folder dashboard (Skeleton UI)
-- [x] Hook `useOptimistic` untuk toggle & delete
-- [x] UI berubah instan sebelum Server Action selesai
-- [x] `startTransition` wrapper (React 19 best practice)
-
-### Definition of Done ✅
-- [x] Dashboard tidak bisa diakses tanpa login
-- [x] Form menolak format salah dengan pesan error jelas
-- [x] Hasil pencarian tetap ada di URL saat di-refresh
-- [x] Hapus/update terasa instan (Optimistic UI)
-- [x] Skeleton Loading aktif saat transisi antar rute
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start local development server |
+| `npm run lint` | Run ESLint checks |
+| `npm run build` | Build production app |
+| `npm start` | Start production server |
 
 ---
 
-## 🖼️ Screenshots
+## Deployment
 
-### Login Page
-Halaman login dengan gradient design dan form validation.
+Recommended deployment target: Vercel.
 
-### Dashboard
-Dashboard utama dengan statistik, search bar, dan daftar tugas.
+Production checklist:
 
-### Add Task Modal
-Bottom sheet form dengan Zod validation dan priority selector.
+- Push only source/config files required for production.
+- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel.
+- Run Supabase schema setup before first production use.
+- Confirm `npm run lint` and `npm run build` pass.
+- Confirm protected route behavior: `/dashboard` redirects to `/login` without session.
 
-### Calendar View
-Kalender interaktif dengan indikator tugas per tanggal.
-
-### Profile
-Profil pengguna dengan progress bar dan statistik.
+The repository includes a GitHub Actions workflow at `.github/workflows/release.yml` for automated lint and build checks.
 
 ---
 
-## 📚 Konsep yang Diterapkan
+## Quality Checks
 
-| Konsep | Implementasi |
-|--------|-------------|
-| **Server Components** | `dashboard/page.tsx`, `login/page.tsx` |
-| **Client Components** | `TaskKuApp.tsx`, `LoginForm.tsx`, semua komponen interaktif |
-| **Server Actions** | `auth-actions.ts`, `task-actions.ts` (`"use server"`) |
-| **Proxy (Middleware)** | `proxy.ts` — proteksi rute via cookie check |
-| **Zod Validation** | `schemas.ts` — `TaskFormSchema.safeParse()` |
-| **useOptimistic** | Toggle & delete task dengan feedback instan |
-| **useSearchParams** | Pencarian persisten via URL query params |
-| **Suspense / Loading** | `loading.tsx` — skeleton UI otomatis |
-| **Cookie Auth** | HttpOnly session cookie via Server Action |
+Latest local verification:
+
+```bash
+npm run lint
+npm run build
+```
+
+Runtime smoke test:
+
+| Route | Expected Result |
+|-------|-----------------|
+| `/login` | Public page loads |
+| `/register` | Public page loads |
+| `/dashboard` without session | Redirects to `/login` |
+| `/` without session | Redirects to `/login` |
+| Unknown route | Shows custom 404 |
 
 ---
 
-## 👥 Tim Pengembang
+## Team
 
-| Nama | GitHub |
+| Name | GitHub |
 |------|--------|
-| **Hamzah Permata Putra** | [@nacht24](https://github.com/nacht24) |
-| **Muhamad Anggara Ramadhan** | [@muhanggaraaa](https://github.com/muhanggaraaa) |
-| **Murfid Muhyiddin** | [@Murfid-m](https://github.com/Murfid-m) |
-
-kELOMPOK 5 BEGINNER
+| Hamzah Permata Putra | [@nacht24](https://github.com/nacht24) |
+| Muhamad Anggara Ramadhan | [@muhanggaraaa](https://github.com/muhanggaraaa) |
+| Murfid Muhyiddin | [@Murfid-m](https://github.com/Murfid-m) |
 
 ---
 
-<div align="center">
+## License
 
-*"Kode lebih sering dibaca daripada ditulis,*
-*namun produk lebih sering digunakan daripada dikodekan."*
-
-— Next.js Masterclass Philosophy
-
-</div>
+This project is private and intended for TaskKu development and release use.

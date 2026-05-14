@@ -84,6 +84,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
+  overflow-x: hidden;
   transition:
     background-color 0.25s ease,
     color 0.25s ease;
@@ -434,10 +435,12 @@ body {
 
 /* ==================== RESPONSIVE CONTAINER ==================== */
 .app-container {
+  width: min(100%, 480px);
   max-width: 480px;
   margin: 0 auto;
   min-height: 100dvh;
   position: relative;
+  overflow-x: clip;
 }
 
 /* When used inside fixed nav, remove min-height */

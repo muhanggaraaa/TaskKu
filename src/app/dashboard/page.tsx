@@ -31,7 +31,7 @@ export default async function DashboardPage() {
   const { name: user, email: userEmail } = parseSession(session.value);
 
   // Server-side data fetching via Server Action
-  const initialTasks = await getTasks(userEmail);
+  const initialTasks = await getTasks();
 
   return (
     <Suspense fallback={<DashboardLoading />}>

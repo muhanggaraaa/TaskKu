@@ -12,12 +12,10 @@ export function AddTaskModal({
   open,
   onClose,
   onTaskCreated,
-  userEmail,
 }: {
   open: boolean;
   onClose: () => void;
-  onTaskCreated: (task: Task) => void;
-  userEmail?: string;
+  onTaskCreated: (task: Task, persistence?: "remote" | "local") => void;
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -51,31 +49,34 @@ export function AddTaskModal({
         done: false,
         createdAt: new Date().toISOString(),
       };
-      const result = await createTaskAction(record, userEmail);
+      const result = await createTaskAction(record);
       // Jika validasi gagal, tampilkan error per field
       if (result.fieldErrors) {
         setFieldErrors(result.fieldErrors);
         return;
       }
       setFieldErrors({});
+      if (result.source === "auth") {
+        toast.error("Session berakhir", {
+          description: result.error ?? "Silakan login ulang.",
+        });
+        return;
+      }
       if (result.success && result.source === "supabase") {
         toast.success("Tugas tersimpan ke database! ☁️", {
           description: `"${title.trim()}" tersimpan via Server Action → Supabase.`,
           icon: <CheckCircle2 size={18} />,
         });
-        onTaskCreated(result.task || record);
+        onTaskCreated(result.task || record, "remote");
       } else {
-        // Fallback ke localStorage
-        const stored = JSON.parse(localStorage.getItem("taskku_tasks") || "[]");
-        stored.push(record);
-        localStorage.setItem("taskku_tasks", JSON.stringify(stored));
+        // Fallback lokal dipersist oleh TaskKuApp dengan storage key per user.
         toast.success("Tugas disimpan (lokal) 📱", {
           description: result.error
             ? `DB error: ${result.error}`
             : "Tersimpan di browser ini saja.",
           icon: <CheckCircle2 size={18} />,
         });
-        onTaskCreated(record);
+        onTaskCreated(record, "local");
       }
       resetForm();
       setFieldErrors({});

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { X, Save, Loader2, Flag, CheckCircle2 } from "lucide-react";
 import type { Task } from "@/lib/types";
@@ -12,10 +12,12 @@ export function EditTaskModal({
   task,
   onClose,
   onTaskUpdated,
+  allowLocalFallback,
 }: {
   task: Task;
   onClose: () => void;
-  onTaskUpdated: (task: Task) => void;
+  onTaskUpdated: (task: Task, persistence?: "remote" | "local") => void;
+  allowLocalFallback: boolean;
 }) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
@@ -24,16 +26,6 @@ export function EditTaskModal({
   const [category, setCategory] = useState(task.category);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<TaskFieldErrors>({});
-
-  // Reset form when task changes
-  useEffect(() => {
-    setTitle(task.title);
-    setDescription(task.description);
-    setDueDate(task.dueDate);
-    setPriority(task.priority);
-    setCategory(task.category);
-    setFieldErrors({});
-  }, [task]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,29 +47,33 @@ export function EditTaskModal({
         return;
       }
       setFieldErrors({});
+      if (result.source === "auth") {
+        toast.error("Session berakhir", {
+          description: result.error ?? "Silakan login ulang.",
+        });
+        return;
+      }
       if (result.success && result.source === "supabase") {
         toast.success("Tugas berhasil diperbarui! ☁️", {
           description: `"${title.trim()}" tersimpan ke database.`,
           icon: <CheckCircle2 size={18} />,
         });
-        onTaskUpdated(result.task || updatedTask);
+        onTaskUpdated(result.task || updatedTask, "remote");
       } else {
-        // Fallback ke localStorage
-        const stored: Task[] = JSON.parse(
-          localStorage.getItem("taskku_tasks") || "[]",
-        );
-        const idx = stored.findIndex((s) => s.id === task.id);
-        if (idx !== -1) {
-          stored[idx] = updatedTask;
-          localStorage.setItem("taskku_tasks", JSON.stringify(stored));
+        if (!allowLocalFallback) {
+          toast.error("Gagal memperbarui tugas", {
+            description: result.error ?? "Perubahan dibatalkan.",
+          });
+          return;
         }
+        // Fallback lokal dipersist oleh TaskKuApp dengan storage key per user.
         toast.success("Tugas diperbarui (lokal) 📱", {
           description: result.error
             ? `DB error: ${result.error}`
             : "Perubahan tersimpan di browser ini saja.",
           icon: <CheckCircle2 size={18} />,
         });
-        onTaskUpdated(updatedTask);
+        onTaskUpdated(updatedTask, "local");
       }
       onClose();
     } catch (err) {
