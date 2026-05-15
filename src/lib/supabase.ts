@@ -2,10 +2,10 @@
  * Supabase Client Configuration (Server-side)
  * 
  * Initialize Supabase client untuk digunakan di Server Actions.
- * Credentials TIDAK terekspos ke browser karena tidak pakai NEXT_PUBLIC_ prefix.
+ * Aplikasi memakai anon key Supabase (NEXT_PUBLIC) tanpa service-role secret.
  * 
- * Jika env vars belum diset, client tetap dibuat tapi akan gagal saat query
- * dan fallback ke localStorage di client side.
+ * Jika env vars belum diset, client tidak dibuat dan UI fallback
+ * ke localStorage browser.
  */
 
 import { createClient } from "@supabase/supabase-js";

@@ -9,12 +9,10 @@ import { TaskCard } from "@/components/TaskCard";
 export function CalendarScreen({
   tasks,
   onToggle,
-  onDelete,
   onDetail,
 }: {
   tasks: Task[];
   onToggle: (t: Task) => void;
-  onDelete: (t: Task) => void;
   onDetail: (t: Task) => void;
 }) {
   const [month, setMonth] = useState(new Date());

@@ -1,10 +1,10 @@
 -- =============================================
--- TaskKu: Migrasi Multi-User
+-- TaskKu Production Schema
 -- =============================================
--- Jalankan SQL ini di Supabase Dashboard > SQL Editor
--- untuk mendukung banyak user.
+-- Run this in Supabase Dashboard > SQL Editor.
+-- Safe to run multiple times because it uses IF NOT EXISTS checks.
 
--- 1. Buat tabel users
+-- Users table for TaskKu custom cookie auth.
 CREATE TABLE IF NOT EXISTS users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
@@ -13,22 +13,32 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 2. Tambah kolom user_email di tabel tasks (jika belum ada)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'tasks' AND column_name = 'user_email'
-  ) THEN
-    ALTER TABLE tasks ADD COLUMN user_email TEXT;
-  END IF;
-END $$;
+-- Tasks table. Dates are stored as YYYY-MM-DD text because the UI uses
+-- native date input values directly.
+CREATE TABLE IF NOT EXISTS tasks (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  duedate TEXT NOT NULL,
+  priority TEXT NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
+  category TEXT NOT NULL,
+  done BOOLEAN DEFAULT false,
+  user_email TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
--- 3. Index untuk query performa
-CREATE INDEX IF NOT EXISTS idx_tasks_user_email ON tasks(user_email);
+-- Add columns for older databases that already had a tasks table.
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS done BOOLEAN DEFAULT false;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_email TEXT;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
+
+-- Indexes for login lookup and per-user task queries.
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_tasks_user_email ON tasks(user_email);
+CREATE INDEX IF NOT EXISTS idx_tasks_duedate ON tasks(duedate);
 
--- 4. (Opsional) Row Level Security — aktifkan jika pakai Supabase Auth
--- ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY "Users can only see their own tasks"
---   ON tasks FOR SELECT USING (user_email = current_setting('request.jwt.claims')::json->>'email');
+-- Important:
+-- This app currently uses custom cookie auth through Next.js Server Actions,
+-- not Supabase Auth JWT. Keep RLS disabled unless you also add policies that
+-- match your auth strategy or move to Supabase Auth/service-role server access.

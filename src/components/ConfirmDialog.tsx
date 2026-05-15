@@ -1,5 +1,5 @@
 "use client";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { FONT_HEADING, FONT } from "@/lib/types";
 
 export function ConfirmDialog({

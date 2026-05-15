@@ -12,7 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import type { Task } from "@/lib/types";
-import { PRIORITIES, FONT_HEADING, FONT } from "@/lib/types";
+import { PRIORITIES, FONT_HEADING } from "@/lib/types";
 import { formatDate, isOverdue } from "@/lib/utils";
 
 export function TaskDetailModal({

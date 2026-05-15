@@ -207,7 +207,7 @@ export function NotificationPanel({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [open, onClose]);
+  }, [open, onClose, triggerRef]);
 
   if (!open) return null;
 

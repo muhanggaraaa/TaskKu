@@ -61,11 +61,42 @@ import {
 
 const STORAGE_KEY = "taskku_tasks";
 
+type TaskPersistence = "remote" | "local";
+
 type OptimisticAction =
   | { type: "toggle"; id: string }
   | { type: "delete"; id: string }
   | { type: "add"; task: Task }
   | { type: "update"; task: Task };
+
+function localIdsKey(storageKey: string) {
+  return `${storageKey}:local_ids`;
+}
+
+function readStoredTasks(storageKey: string): Task[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = window.localStorage.getItem(storageKey);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? (parsed as Task[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function readStoredLocalIds(storageKey: string): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const stored = window.localStorage.getItem(localIdsKey(storageKey));
+    if (!stored) return new Set();
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.filter((id): id is string => typeof id === "string"));
+  } catch {
+    return new Set();
+  }
+}
 
 export function TaskKuApp({
   initialTasks,
@@ -87,6 +118,7 @@ export function TaskKuApp({
   // === New States for Detail, Edit, Delete Confirm ===
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingTaskLocal, setEditingTaskLocal] = useState(false);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
   const bellRef = useRef<HTMLButtonElement>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
@@ -100,6 +132,13 @@ export function TaskKuApp({
   const pathname = usePathname();
   const router = useRouter();
   const search = searchParams.get("search") || "";
+  const storageKey = useMemo(() => {
+    const owner = (userEmail || user || "guest").trim().toLowerCase();
+    return `${STORAGE_KEY}:${encodeURIComponent(owner)}`;
+  }, [user, userEmail]);
+  const storageHydratedRef = useRef(initialTasks.length > 0);
+  const skipNextStorageWriteRef = useRef(false);
+  const localTaskIdsRef = useRef<Set<string>>(new Set());
 
   const handleSearch = useCallback(
     (term: string) => {
@@ -109,7 +148,8 @@ export function TaskKuApp({
       } else {
         params.delete("search");
       }
-      router.replace(`${pathname}?${params.toString()}`);
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname);
     },
     [searchParams, pathname, router],
   );
@@ -140,21 +180,62 @@ export function TaskKuApp({
   );
 
   useEffect(() => {
-    if (tasks.length === 0) {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          setTasks(JSON.parse(stored));
-        } catch {}
+    const stored = readStoredTasks(storageKey);
+    const storedLocalIds = readStoredLocalIds(storageKey);
+    storageHydratedRef.current = true;
+
+    if (initialTasks.length > 0) {
+      localTaskIdsRef.current = storedLocalIds;
+      const remoteIds = new Set(initialTasks.map((task) => task.id));
+      const localOnly = stored.filter(
+        (task) => storedLocalIds.has(task.id) && !remoteIds.has(task.id),
+      );
+
+      if (localOnly.length === 0) {
+        skipNextStorageWriteRef.current = false;
+        return;
       }
+
+      skipNextStorageWriteRef.current = true;
+      startTransition(() => {
+        setTasks(
+          [...initialTasks, ...localOnly].sort((a, b) =>
+            a.dueDate.localeCompare(b.dueDate),
+          ),
+        );
+      });
+      return;
     }
-  }, []);
+
+    if (stored.length === 0) return;
+
+    localTaskIdsRef.current =
+      storedLocalIds.size > 0
+        ? storedLocalIds
+        : new Set(stored.map((task) => task.id));
+    skipNextStorageWriteRef.current = true;
+    startTransition(() => {
+      setTasks(stored);
+    });
+  }, [initialTasks, storageKey]);
 
   useEffect(() => {
-    if (tasks.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    if (!storageHydratedRef.current) return;
+    if (skipNextStorageWriteRef.current) {
+      skipNextStorageWriteRef.current = false;
+      return;
     }
-  }, [tasks]);
+
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(tasks));
+      window.localStorage.setItem(
+        localIdsKey(storageKey),
+        JSON.stringify([...localTaskIdsRef.current]),
+      );
+    } catch {
+      // Storage can be unavailable in private mode; the in-memory state still works.
+    }
+  }, [tasks, storageKey]);
 
   const toggleTask = (t: Task) => {
     startTransition(async () => {
@@ -162,21 +243,26 @@ export function TaskKuApp({
       addOptimistic({ type: "toggle", id: t.id });
       try {
         const result = await toggleTaskAction(t.id);
+        let usedLocalFallback = false;
         if (!result.success) {
-          const stored: Task[] = JSON.parse(
-            localStorage.getItem(STORAGE_KEY) || "[]",
-          );
-          const found = stored.find((s) => s.id === t.id);
-          if (found) {
-            found.done = !t.done;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+          if (result.source === "auth" || !localTaskIdsRef.current.has(t.id)) {
+            toast.error("Gagal update status", {
+              description: result.error ?? "Perubahan dibatalkan.",
+            });
+            return;
           }
+          usedLocalFallback = true;
+          toast.success("Status disimpan lokal", {
+            description: result.error
+              ? `Database belum siap: ${result.error}`
+              : "Perubahan tersimpan di browser ini.",
+          });
         }
-        // Update actual state setelah server response
+        const nextTask = result.task ?? { ...t, done: !t.done };
         setTasks((prev) =>
-          prev.map((p) => (p.id === t.id ? { ...p, done: !p.done } : p)),
+          prev.map((p) => (p.id === t.id ? nextTask : p)),
         );
-        if (!t.done) toast.success("Tugas selesai 🎉");
+        if (!t.done && !usedLocalFallback) toast.success("Tugas selesai 🎉");
       } catch (err) {
         toast.error("Gagal update status", { description: String(err) });
       }
@@ -189,18 +275,24 @@ export function TaskKuApp({
       addOptimistic({ type: "delete", id: t.id });
       try {
         const result = await deleteTaskAction(t.id);
+        let usedLocalFallback = false;
         if (!result.success) {
-          const stored: Task[] = JSON.parse(
-            localStorage.getItem(STORAGE_KEY) || "[]",
-          );
-          localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(stored.filter((s) => s.id !== t.id)),
-          );
+          if (result.source === "auth" || !localTaskIdsRef.current.has(t.id)) {
+            toast.error("Gagal menghapus tugas", {
+              description: result.error ?? "Perubahan dibatalkan.",
+            });
+            return;
+          }
+          usedLocalFallback = true;
+          toast.success("Tugas dihapus lokal", {
+            description: result.error
+              ? `Database belum siap: ${result.error}`
+              : "Perubahan tersimpan di browser ini.",
+          });
         }
-        // Update actual state
+        localTaskIdsRef.current.delete(t.id);
         setTasks((p) => p.filter((x) => x.id !== t.id));
-        toast.success("Tugas dihapus");
+        if (!usedLocalFallback) toast.success("Tugas dihapus");
       } catch (err) {
         toast.error("Gagal menghapus tugas", { description: String(err) });
       }
@@ -219,13 +311,30 @@ export function TaskKuApp({
     }
   };
 
-  const onTaskCreated = (task: Task) => {
+  const onTaskCreated = (task: Task, persistence: TaskPersistence = "remote") => {
+    if (persistence === "local") {
+      localTaskIdsRef.current.add(task.id);
+    } else {
+      localTaskIdsRef.current.delete(task.id);
+    }
+
     setTasks((prev) =>
       [...prev, task].sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
     );
   };
 
-  const onTaskUpdated = (updatedTask: Task) => {
+  const onTaskUpdated = (
+    updatedTask: Task,
+    persistence: TaskPersistence = localTaskIdsRef.current.has(updatedTask.id)
+      ? "local"
+      : "remote",
+  ) => {
+    if (persistence === "local") {
+      localTaskIdsRef.current.add(updatedTask.id);
+    } else {
+      localTaskIdsRef.current.delete(updatedTask.id);
+    }
+
     startTransition(() => {
       addOptimistic({ type: "update", task: updatedTask });
     });
@@ -320,7 +429,7 @@ export function TaskKuApp({
               "linear-gradient(135deg, #1e40af 0%, #4338ca 50%, #6366f1 100%)",
             color: "white",
             position: "relative",
-            zIndex: notifOpen ? 10 : undefined,
+            zIndex: notifOpen ? 50 : 1,
           }}
         >
           {/* Decorative circles — wrapped in their own clipping layer so the
@@ -613,6 +722,7 @@ export function TaskKuApp({
               >
                 <Search size={16} color="var(--foreground-subtle)" />
                 <input
+                  aria-label="Cari tugas"
                   defaultValue={search}
                   onChange={(e) => handleSearch(e.target.value)}
                   placeholder="Cari tugas, kategori…"
@@ -662,6 +772,7 @@ export function TaskKuApp({
                     onClick={() =>
                       setFilterCategory((p) => (p === cat ? null : cat))
                     }
+                    aria-pressed={filterCategory === cat}
                     className="filter-chip"
                     data-active={filterCategory === cat || undefined}
                   >
@@ -683,6 +794,7 @@ export function TaskKuApp({
                     onClick={() =>
                       setFilterPriority((prev) => (prev === p.id ? null : p.id))
                     }
+                    aria-pressed={filterPriority === p.id}
                     className="filter-chip"
                     data-active={filterPriority === p.id || undefined}
                     style={
@@ -708,6 +820,7 @@ export function TaskKuApp({
                 />
                 <button
                   type="button"
+                  aria-label="Ubah urutan tugas"
                   onClick={() =>
                     setSortBy((p) =>
                       p === "date"
@@ -945,7 +1058,6 @@ export function TaskKuApp({
             <CalendarScreen
               tasks={optimisticTasks}
               onToggle={toggleTask}
-              onDelete={handleDeleteRequest}
               onDetail={setSelectedTask}
             />
           )}
@@ -954,13 +1066,15 @@ export function TaskKuApp({
 
         {/* ===== FAB ===== */}
         <button
+          type="button"
+          aria-label="Tambah tugas baru"
           onClick={() => setOpen(true)}
           style={{
             position: "fixed",
-            bottom: 88,
+            bottom: 78,
             zIndex: 30,
-            width: 56,
-            height: 56,
+            width: 52,
+            height: 52,
             borderRadius: "50%",
             background: "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)",
             color: "white",
@@ -971,7 +1085,7 @@ export function TaskKuApp({
             alignItems: "center",
             justifyContent: "center",
             transition: "all 0.2s ease",
-            right: "max(calc(50% - 180px), 16px)",
+            right: "max(calc(50% - 208px), 20px)",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "scale(1.08)";
@@ -980,7 +1094,7 @@ export function TaskKuApp({
             e.currentTarget.style.transform = "scale(1)";
           }}
         >
-          <Plus size={24} strokeWidth={2.5} />
+          <Plus size={22} strokeWidth={2.5} />
         </button>
 
         {/* ===== BOTTOM NAV — same width as app-container ===== */}
@@ -1031,6 +1145,9 @@ export function TaskKuApp({
               return (
                 <button
                   key={tab.id}
+                  type="button"
+                  aria-label={`Buka ${tab.label}`}
+                  aria-pressed={active}
                   onClick={() => setScreen(tab.id)}
                   style={{
                     display: "flex",
@@ -1106,7 +1223,6 @@ export function TaskKuApp({
         open={open}
         onClose={() => setOpen(false)}
         onTaskCreated={onTaskCreated}
-        userEmail={userEmail}
       />
 
       {/* Task Detail Modal */}
@@ -1116,6 +1232,7 @@ export function TaskKuApp({
           onClose={() => setSelectedTask(null)}
           onEdit={(t) => {
             setSelectedTask(null);
+            setEditingTaskLocal(localTaskIdsRef.current.has(t.id));
             setEditingTask(t);
           }}
           onToggle={(t) => {
@@ -1132,11 +1249,17 @@ export function TaskKuApp({
       {/* Edit Task Modal */}
       {editingTask && (
         <EditTaskModal
+          key={editingTask.id}
           task={editingTask}
-          onClose={() => setEditingTask(null)}
-          onTaskUpdated={(updatedTask) => {
-            onTaskUpdated(updatedTask);
+          onClose={() => {
             setEditingTask(null);
+            setEditingTaskLocal(false);
+          }}
+          allowLocalFallback={editingTaskLocal}
+          onTaskUpdated={(updatedTask, persistence) => {
+            onTaskUpdated(updatedTask, persistence);
+            setEditingTask(null);
+            setEditingTaskLocal(false);
           }}
         />
       )}
